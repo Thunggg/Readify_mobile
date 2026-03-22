@@ -11,25 +11,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/main.dart';
 
 void main() {
-  testWidgets('Register screen smoke test', (WidgetTester tester) async {
+  testWidgets('Login screen smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Get Started'), findsOneWidget);
+    expect(find.text('Welcome Back!'), findsOneWidget);
 
     // Basic fields exist
-    expect(find.text('First name'), findsOneWidget);
-    expect(find.text('Last name'), findsOneWidget);
-    expect(find.text('Mobile Number'), findsOneWidget);
-    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Gmail'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.text('Sign Up'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.text('Sign Up'), findsOneWidget);
+    expect(find.text('Log In'), findsOneWidget);
 
     // No counter UI anymore
     expect(find.byIcon(Icons.add), findsNothing);

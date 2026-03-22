@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/api/api_error.dart';
 import '../data/auth_api.dart';
+import '../login/login_screen.dart';
 import '../otp/otp_verify_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -468,8 +469,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             TextButton(
                               onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Sign In screen not implemented')),
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginScreen(),
+                                  ),
                                 );
                               },
                               child: const Text(

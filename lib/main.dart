@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'features/auth/register/register_screen.dart';
+import 'features/auth/login/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const RegisterScreen(),
+      home: const LoginScreen(),
     );
   }
 }
