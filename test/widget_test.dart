@@ -15,20 +15,21 @@ void main() {
     await tester.pumpWidget(const MyApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Register'), findsOneWidget);
+    expect(find.text('Get Started'), findsOneWidget);
 
     // Basic fields exist
-    expect(find.widgetWithText(TextFormField, 'First name'), findsOneWidget);
-    expect(find.widgetWithText(TextFormField, 'Last name'), findsOneWidget);
-    expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
-    expect(find.widgetWithText(TextFormField, 'Password'), findsOneWidget);
+    expect(find.text('First name'), findsOneWidget);
+    expect(find.text('Last name'), findsOneWidget);
+    expect(find.text('Mobile Number'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text('Create account'),
+      find.text('Sign Up'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Create account'), findsOneWidget);
+    expect(find.text('Sign Up'), findsOneWidget);
 
     // No counter UI anymore
     expect(find.byIcon(Icons.add), findsNothing);
