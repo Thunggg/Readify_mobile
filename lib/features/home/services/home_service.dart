@@ -4,6 +4,61 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error.dart';
 import '../models/home_models.dart';
 
+class HomeBookQuery {
+  const HomeBookQuery({
+    this.page = 1,
+    this.limit = 12,
+    this.keyword,
+    this.categoryId,
+    this.minPrice,
+    this.maxPrice,
+    this.sort = 'newest',
+  });
+
+  final int page;
+  final int limit;
+  final String? keyword;
+  final String? categoryId;
+  final double? minPrice;
+  final double? maxPrice;
+  final String sort;
+
+  Map<String, dynamic> toParams() {
+    final map = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+      'sort': sort,
+    };
+
+    final q = keyword?.trim() ?? '';
+    if (q.isNotEmpty) map['q'] = q;
+
+    final category = categoryId?.trim() ?? '';
+    if (category.isNotEmpty) map['categoryId'] = category;
+
+    if (minPrice != null) map['minPrice'] = minPrice;
+    if (maxPrice != null) map['maxPrice'] = maxPrice;
+
+    return map;
+  }
+}
+
+class HomeBookPageResult {
+  const HomeBookPageResult({
+    required this.items,
+    required this.page,
+    required this.limit,
+    required this.total,
+  });
+
+  final List<HomeBook> items;
+  final int page;
+  final int limit;
+  final int total;
+
+  bool get hasNext => page * limit < total;
+}
+
 class HomeService {
   HomeService({Dio? dio}) : _dio = dio ?? ApiClient.instance.dio;
 
@@ -25,6 +80,36 @@ class HomeService {
           .whereType<Map>()
           .map((e) => HomeBook.fromJson(Map<String, dynamic>.from(e)))
           .toList(growable: false);
+    } on DioException catch (e) {
+      throw ApiError(prettyDioError(e), statusCode: e.response?.statusCode);
+    }
+  }
+
+  Future<HomeBookPageResult> getBooksPage(HomeBookQuery query) async {
+    try {
+      final res = await _dio.get('/book', queryParameters: query.toParams());
+
+      final data = _extractDataMap(res.data, fallbackMessage: 'Get books failed');
+      final itemsRaw = data['items'];
+      final metaRaw = data['meta'];
+
+      final items = itemsRaw is List
+          ? itemsRaw
+              .whereType<Map>()
+              .map((e) => HomeBook.fromJson(Map<String, dynamic>.from(e)))
+              .toList(growable: false)
+          : <HomeBook>[];
+
+      if (metaRaw is Map) {
+        final meta = Map<String, dynamic>.from(metaRaw);
+        final page = _asInt(meta['page']) ?? query.page;
+        final limit = _asInt(meta['limit']) ?? query.limit;
+        final total = _asInt(meta['total']) ?? items.length;
+
+        return HomeBookPageResult(items: items, page: page, limit: limit, total: total);
+      }
+
+      return HomeBookPageResult(items: items, page: query.page, limit: query.limit, total: items.length);
     } on DioException catch (e) {
       throw ApiError(prettyDioError(e), statusCode: e.response?.statusCode);
     }
@@ -57,6 +142,27 @@ class HomeService {
       final res = await _dio.get('/book/$bookId');
       final data = _extractDataMap(res.data, fallbackMessage: 'Get book detail failed');
       return HomeBook.fromJson(data);
+    } on DioException catch (e) {
+      throw ApiError(prettyDioError(e), statusCode: e.response?.statusCode);
+    }
+  }
+
+  Future<List<HomeBook>> getRelatedBooks(String bookId, {int limit = 8}) async {
+    try {
+      final res = await _dio.get('/book/$bookId/related', queryParameters: {'limit': limit});
+      final data = _extractData(res.data, fallbackMessage: 'Get related books failed');
+
+      dynamic itemsRaw = data;
+      if (data is Map && data['items'] is List) {
+        itemsRaw = data['items'];
+      }
+
+      if (itemsRaw is! List) return const [];
+
+      return itemsRaw
+          .whereType<Map>()
+          .map((e) => HomeBook.fromJson(Map<String, dynamic>.from(e)))
+          .toList(growable: false);
     } on DioException catch (e) {
       throw ApiError(prettyDioError(e), statusCode: e.response?.statusCode);
     }
@@ -167,4 +273,10 @@ Map<String, dynamic> _extractDataMap(dynamic payload, {required String fallbackM
   if (data is Map<String, dynamic>) return data;
   if (data is Map) return Map<String, dynamic>.from(data);
   throw ApiError(fallbackMessage);
+}
+
+int? _asInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '');
 }

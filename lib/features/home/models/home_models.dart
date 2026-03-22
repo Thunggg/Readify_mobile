@@ -9,6 +9,7 @@ class HomeBook {
     this.thumbnailUrl,
     this.averageRating,
     this.description,
+    this.categories = const [],
   });
 
   final String id;
@@ -20,6 +21,7 @@ class HomeBook {
   final String? thumbnailUrl;
   final double? averageRating;
   final String? description;
+  final List<HomeCategory> categories;
 
   String get authorText {
     if (authors.isEmpty) return 'Unknown author';
@@ -41,6 +43,18 @@ class HomeBook {
       }
     }
 
+    final rawCategories = json['categoryIds'];
+    final categories = <HomeCategory>[];
+    if (rawCategories is List) {
+      for (final item in rawCategories) {
+        if (item is Map<String, dynamic>) {
+          categories.add(HomeCategory.fromJson(item));
+        } else if (item is String && item.trim().isNotEmpty) {
+          categories.add(HomeCategory(id: item.trim(), name: ''));
+        }
+      }
+    }
+
     return HomeBook(
       id: (json['_id'] ?? '').toString(),
       title: (json['title'] ?? '').toString(),
@@ -51,6 +65,7 @@ class HomeBook {
       thumbnailUrl: json['thumbnailUrl']?.toString(),
       averageRating: _toNullableDouble(json['averageRating']),
       description: json['description']?.toString(),
+      categories: categories,
     );
   }
 }

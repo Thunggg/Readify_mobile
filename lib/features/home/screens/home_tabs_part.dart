@@ -97,7 +97,7 @@ class _HomeTab extends StatelessWidget {
   }
 }
 
-class _BooksTab extends StatelessWidget {
+class _BooksTab extends StatefulWidget {
   const _BooksTab({
     required this.provider,
     required this.currency,
@@ -113,38 +113,78 @@ class _BooksTab extends StatelessWidget {
   final bool Function(String id) isBookFavorited;
 
   @override
+  State<_BooksTab> createState() => _BooksTabState();
+}
+
+class _BooksTabState extends State<_BooksTab> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _openBookSearchPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BookSearchFilterScreen(
+          categories: widget.provider.bookCategories,
+          currency: widget.currency,
+          onOpenDetail: widget.onOpenDetail,
+          onToggleFavoriteBook: widget.onToggleFavoriteBook,
+          isBookFavorited: widget.isBookFavorited,
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final books = provider.allBooks;
-
-    if (provider.loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (books.isEmpty) {
-      return const Center(child: Text('Chưa có sách'));
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(12),
-      itemBuilder: (context, index) {
-        final book = books[index];
-        return ListTile(
-          onTap: () => onOpenDetail(book),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+      child: Column(
+        children: [
+          TextField(
+            readOnly: true,
+            controller: _searchController,
+            onTap: _openBookSearchPage,
+            decoration: InputDecoration(
+              hintText: 'Tìm kiếm theo tiêu đề/tác giả',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: const Icon(Icons.open_in_new),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
           ),
-          leading: SizedBox(width: 44, child: _NetworkImage(url: book.thumbnailUrl)),
-          title: Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-          subtitle: Text('${book.authorText}\n${currency.format(book.basePrice)}'),
-          isThreeLine: true,
-          trailing: IconButton(
-            icon: Icon(isBookFavorited(book.id) ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent),
-            onPressed: () => onToggleFavoriteBook(book),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _openBookSearchPage,
+              icon: const Icon(Icons.menu_book_outlined),
+              label: const Text('Mở trang Sách (Search / Sort / Filter)'),
+            ),
           ),
-        );
-      },
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
-      itemCount: books.length,
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: const Text(
+              'Toan bo tinh nang tim kiem, sap xep va bo loc Sach da duoc tach ra 1 module rieng trong 1 trang chuyen biet.',
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -8,6 +8,7 @@ class _TopHeader extends StatelessWidget {
     required this.searching,
     required this.suggestions,
     required this.onLogoTap,
+    required this.onSearchTap,
     required this.onSearchChanged,
     required this.onSelectSuggestion,
     required this.onProfileMenuTap,
@@ -19,6 +20,7 @@ class _TopHeader extends StatelessWidget {
   final bool searching;
   final List<HomeSearchSuggestion> suggestions;
   final VoidCallback onLogoTap;
+  final VoidCallback onSearchTap;
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<HomeSearchSuggestion> onSelectSuggestion;
   final ValueChanged<String> onProfileMenuTap;
@@ -47,17 +49,14 @@ class _TopHeader extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
+                    readOnly: true,
                     controller: searchController,
+                    onTap: onSearchTap,
                     onChanged: onSearchChanged,
                     decoration: InputDecoration(
-                      hintText: 'Tìm sách và bài viết...',
+                      hintText: 'Tim sach de mo trang bo loc...',
                       prefixIcon: const Icon(Icons.search),
-                      suffixIcon: searching
-                          ? const Padding(
-                              padding: EdgeInsets.all(12),
-                              child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
-                            )
-                          : null,
+                      suffixIcon: const Icon(Icons.open_in_new),
                       isDense: true,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -102,36 +101,6 @@ class _TopHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (suggestions.isNotEmpty)
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-              constraints: const BoxConstraints(maxHeight: 280),
-              decoration: BoxDecoration(
-                color: const Color(0xFF12151E),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-              ),
-              child: ListView.separated(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemBuilder: (context, index) {
-                  final item = suggestions[index];
-                  return ListTile(
-                    onTap: () => onSelectSuggestion(item),
-                    leading: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: Colors.white.withValues(alpha: 0.1),
-                      child: Icon(item.type == 'book' ? Icons.menu_book : Icons.article, size: 16),
-                    ),
-                    title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    subtitle: Text(item.subtitle ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
-                  );
-                },
-                separatorBuilder: (context, index) => Divider(height: 1, color: Colors.white.withValues(alpha: 0.06)),
-                itemCount: suggestions.length,
-              ),
-            ),
         ],
       ),
     );

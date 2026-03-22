@@ -19,7 +19,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   final NumberFormat _currency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
 
   HomeBook? _book;
+  List<HomeBook> _relatedBooks = const [];
   bool _loading = true;
+  bool _loadingRelated = true;
 
   @override
   void initState() {
@@ -27,6 +29,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     _book = widget.initialBook;
     _loading = _book == null;
     _load();
+    _loadRelated();
   }
 
   Future<void> _load() async {
@@ -36,6 +39,20 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       _book = data ?? _book;
       _loading = false;
     });
+  }
+
+  Future<void> _loadRelated() async {
+    try {
+      final items = await _service.getRelatedBooks(widget.bookId, limit: 8);
+      if (!mounted) return;
+      setState(() {
+        _relatedBooks = items;
+        _loadingRelated = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingRelated = false);
+    }
   }
 
   @override
@@ -68,6 +85,62 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                     Text('Đánh giá: ${(book.averageRating ?? 0).toStringAsFixed(1)}'),
                     const SizedBox(height: 10),
                     Text(book.description ?? 'Chưa có mô tả'),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Sách liên quan',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 230,
+                      child: _loadingRelated
+                          ? const Center(child: CircularProgressIndicator())
+                          : _relatedBooks.isEmpty
+                              ? const Center(child: Text('Chưa có sách liên quan'))
+                              : ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemBuilder: (context, index) {
+                                    final item = _relatedBooks[index];
+                                    return SizedBox(
+                                      width: 150,
+                                      child: InkWell(
+                                        onTap: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) => BookDetailScreen(bookId: item.id, initialBook: item),
+                                            ),
+                                          );
+                                        },
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Ink(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(alpha: 0.04),
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(child: _NetworkImage(url: item.thumbnailUrl)),
+                                              const SizedBox(height: 6),
+                                              Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                _currency.format(item.basePrice),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  separatorBuilder: (context, index) => const SizedBox(width: 10),
+                                  itemCount: _relatedBooks.length,
+                                ),
+                    ),
                   ],
                 ),
     );

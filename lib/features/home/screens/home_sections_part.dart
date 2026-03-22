@@ -288,6 +288,194 @@ class _FeaturedBlogCards extends StatelessWidget {
   }
 }
 
+class BookCard extends StatelessWidget {
+  const BookCard({
+    super.key,
+    required this.book,
+    required this.priceText,
+    required this.onTap,
+    required this.onAddToCart,
+    required this.onToggleFavorite,
+    required this.favorited,
+    this.isGrid = true,
+  });
+
+  final HomeBook book;
+  final String priceText;
+  final VoidCallback onTap;
+  final VoidCallback onAddToCart;
+  final VoidCallback onToggleFavorite;
+  final bool favorited;
+  final bool isGrid;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isGrid) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _NetworkImage(url: book.thumbnailUrl)),
+                const SizedBox(height: 8),
+                Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                Text(book.authorText, maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.star_rounded, size: 15, color: Colors.amber),
+                    const SizedBox(width: 4),
+                    Text((book.averageRating ?? 0).toStringAsFixed(1)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(child: Text(priceText, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Thêm vào giỏ',
+                      onPressed: onAddToCart,
+                      icon: const Icon(Icons.add_shopping_cart_outlined, size: 18),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Yêu thích',
+                      icon: Icon(favorited ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent, size: 18),
+                      onPressed: onToggleFavorite,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return ListTile(
+      onTap: onTap,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
+      ),
+      leading: SizedBox(width: 46, child: _NetworkImage(url: book.thumbnailUrl)),
+      title: Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(book.authorText, maxLines: 1, overflow: TextOverflow.ellipsis),
+          Row(
+            children: [
+              const Icon(Icons.star_rounded, size: 15, color: Colors.amber),
+              const SizedBox(width: 4),
+              Text((book.averageRating ?? 0).toStringAsFixed(1)),
+              const SizedBox(width: 8),
+              Expanded(child: Text(priceText, maxLines: 1, overflow: TextOverflow.ellipsis)),
+            ],
+          ),
+        ],
+      ),
+      trailing: SizedBox(
+        width: 70,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              onPressed: onAddToCart,
+              icon: const Icon(Icons.add_shopping_cart_outlined, size: 18),
+              tooltip: 'Thêm vào giỏ',
+            ),
+            IconButton(
+              onPressed: onToggleFavorite,
+              icon: Icon(favorited ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent, size: 18),
+              tooltip: 'Yêu thích',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class BookCardSkeleton extends StatelessWidget {
+  const BookCardSkeleton({super.key, this.isGrid = true});
+
+  final bool isGrid;
+
+  @override
+  Widget build(BuildContext context) {
+    final box = Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+
+    if (isGrid) {
+      return Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: box),
+            const SizedBox(height: 8),
+            Container(height: 12, width: double.infinity, color: Colors.white.withValues(alpha: 0.10)),
+            const SizedBox(height: 6),
+            Container(height: 10, width: 100, color: Colors.white.withValues(alpha: 0.10)),
+            const SizedBox(height: 10),
+            Container(height: 10, width: 70, color: Colors.white.withValues(alpha: 0.10)),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(width: 46, height: 64, child: box),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(height: 12, width: double.infinity, color: Colors.white.withValues(alpha: 0.10)),
+                const SizedBox(height: 6),
+                Container(height: 10, width: 120, color: Colors.white.withValues(alpha: 0.10)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _NetworkImage extends StatelessWidget {
   const _NetworkImage({required this.url});
 

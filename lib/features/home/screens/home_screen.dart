@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../book/screens/book_search_filter_screen.dart';
 import '../../auth/login/login_screen.dart';
 import '../models/home_models.dart';
 import '../providers/home_provider.dart';
@@ -50,6 +51,25 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _openBookSearchFilterPage({String? initialKeyword}) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BookSearchFilterScreen(
+          categories: _provider.bookCategories,
+          currency: _currency,
+          initialKeyword: initialKeyword,
+          onOpenDetail: (book) {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => BookDetailScreen(bookId: book.id, initialBook: book)),
+            );
+          },
+          onToggleFavoriteBook: _provider.toggleFavoriteBook,
+          isBookFavorited: _provider.isBookFavorited,
+        ),
+      ),
+    );
+  }
+
   void _handleSearchTap(HomeSearchSuggestion item) {
     _searchController.clear();
     _provider.clearSearchSuggestions();
@@ -86,6 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   searching: _provider.searching,
                   suggestions: _provider.searchSuggestions,
                   onLogoTap: () => setState(() => _tabIndex = 0),
+                  onSearchTap: () => _openBookSearchFilterPage(initialKeyword: _searchController.text),
                   onSearchChanged: _onSearchChanged,
                   onSelectSuggestion: _handleSearchTap,
                   onProfileMenuTap: (value) {
