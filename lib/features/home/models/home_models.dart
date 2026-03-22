@@ -135,6 +135,26 @@ class HomeBannerItem {
   final HomeBlogPost? blog;
 }
 
+class HomeSearchSuggestion {
+  const HomeSearchSuggestion({
+    required this.type,
+    required this.id,
+    required this.title,
+    this.subtitle,
+    this.imageUrl,
+    this.book,
+    this.blog,
+  });
+
+  final String type; // book | blog
+  final String id;
+  final String title;
+  final String? subtitle;
+  final String? imageUrl;
+  final HomeBook? book;
+  final HomeBlogPost? blog;
+}
+
 double _toDouble(dynamic value) {
   if (value is num) return value.toDouble();
   return double.tryParse(value?.toString() ?? '') ?? 0;

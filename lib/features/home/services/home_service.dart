@@ -30,6 +30,28 @@ class HomeService {
     }
   }
 
+  Future<List<HomeBook>> searchBooks(String keyword, {int limit = 6}) async {
+    try {
+      final res = await _dio.get('/book', queryParameters: {
+        'page': 1,
+        'limit': limit,
+        'q': keyword,
+        'sort': 'newest',
+      });
+
+      final data = _extractDataMap(res.data, fallbackMessage: 'Search books failed');
+      final items = data['items'];
+      if (items is! List) return const [];
+
+      return items
+          .whereType<Map>()
+          .map((e) => HomeBook.fromJson(Map<String, dynamic>.from(e)))
+          .toList(growable: false);
+    } on DioException catch (e) {
+      throw ApiError(prettyDioError(e), statusCode: e.response?.statusCode);
+    }
+  }
+
   Future<HomeBook?> getBookDetail(String bookId) async {
     try {
       final res = await _dio.get('/book/$bookId');
@@ -48,6 +70,27 @@ class HomeService {
         'sortBy': sortBy,
       });
       final data = _extractDataMap(res.data, fallbackMessage: 'Get blogs failed');
+      final items = data['items'];
+      if (items is! List) return const [];
+
+      return items
+          .whereType<Map>()
+          .map((e) => HomeBlogPost.fromJson(Map<String, dynamic>.from(e)))
+          .toList(growable: false);
+    } on DioException catch (e) {
+      throw ApiError(prettyDioError(e), statusCode: e.response?.statusCode);
+    }
+  }
+
+  Future<List<HomeBlogPost>> searchBlogs(String keyword, {int limit = 6}) async {
+    try {
+      final res = await _dio.get('/blog/posts', queryParameters: {
+        'page': 1,
+        'limit': limit,
+        'search': keyword,
+        'sortBy': 'newest',
+      });
+      final data = _extractDataMap(res.data, fallbackMessage: 'Search blogs failed');
       final items = data['items'];
       if (items is! List) return const [];
 
