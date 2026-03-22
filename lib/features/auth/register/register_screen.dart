@@ -115,7 +115,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => OtpVerifyScreen(emailForDisplay: _email.text.trim().toLowerCase()),
+          builder: (_) => OtpVerifyScreen(
+            emailForDisplay: _email.text.trim().toLowerCase(),
+            otpLength: 6,
+            topTitle: 'Verify Email',
+            instruction: 'You need to enter ${6}-digit code we sent to your email.',
+            confirmLabel: 'Confirm',
+          ),
         ),
       );
     } catch (e) {
