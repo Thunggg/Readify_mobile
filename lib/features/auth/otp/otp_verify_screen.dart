@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/api/api_error.dart';
 import '../data/auth_api.dart';
+import '../login/login_screen.dart';
 
 class OtpVerifyScreen extends StatefulWidget {
   const OtpVerifyScreen({
@@ -108,8 +109,9 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
     try {
       await AuthApi().verifyRegisterOtp(otp: _otpValue);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Verified successfully. Account created.')),
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
       );
     } catch (e) {
       if (!mounted) return;
@@ -216,16 +218,9 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                               ),
                         ),
                         const SizedBox(height: 18),
-                        Center(
-                          child: Wrap(
-                            spacing: 12,
-                            runSpacing: 12,
-                            alignment: WrapAlignment.center,
-                            children: List.generate(widget.otpLength, (i) {
-                              final value = _digits[i];
-                              return _OtpBox(value: value);
-                            }),
-                          ),
+                        _OtpBoxesRow(
+                          otpLength: widget.otpLength,
+                          digits: _digits,
                         ),
                         const SizedBox(height: 18),
                         SizedBox(
@@ -320,12 +315,12 @@ class _OtpBox extends StatelessWidget {
   const _OtpBox({required this.value});
 
   final String value;
+  static const double height = 56;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 56,
-      height: 56,
+      height: height,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
@@ -339,6 +334,51 @@ class _OtpBox extends StatelessWidget {
               letterSpacing: 1.0,
             ),
       ),
+    );
+  }
+}
+
+class _OtpBoxesRow extends StatelessWidget {
+  const _OtpBoxesRow({required this.otpLength, required this.digits});
+
+  final int otpLength;
+  final List<String> digits;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 12.0;
+        const minBoxWidth = 44.0;
+        final available = constraints.maxWidth;
+        final totalGaps = gap * (otpLength - 1);
+        final boxWidth = ((available - totalGaps) / otpLength).floorToDouble();
+
+        // If OTP length is large, keep single row with horizontal scroll.
+        final needsScroll = boxWidth < minBoxWidth;
+        final width = needsScroll ? minBoxWidth : boxWidth;
+
+        final row = Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(otpLength, (i) {
+            return Padding(
+              padding: EdgeInsets.only(right: i == otpLength - 1 ? 0 : gap),
+              child: SizedBox(
+                width: width,
+                child: _OtpBox(value: digits[i]),
+              ),
+            );
+          }),
+        );
+
+        if (!needsScroll) return row;
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: row,
+        );
+      },
     );
   }
 }
