@@ -4,6 +4,32 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error.dart';
 
 class AuthApi {
+  /// Đăng nhập, trả về map chứa accessToken, refreshToken, user
+  Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final res = await _dio.post(
+        '/auth/login',
+        data: {'email': email, 'password': password},
+      );
+      final data = res.data;
+      if (data is Map && data['success'] == true) {
+        final payload = data['data'];
+        if (payload is Map<String, dynamic>) return payload;
+        if (payload is Map) return Map<String, dynamic>.from(payload);
+        return <String, dynamic>{};
+      }
+      if (data is Map && data['message'] is String) {
+        throw ApiError(data['message'] as String, statusCode: res.statusCode);
+      }
+      throw ApiError('Login failed', statusCode: res.statusCode);
+    } on DioException catch (e) {
+      throw ApiError(prettyDioError(e), statusCode: e.response?.statusCode);
+    }
+  }
+
   AuthApi({Dio? dio}) : _dio = dio ?? ApiClient.instance.dio;
 
   final Dio _dio;
@@ -48,10 +74,7 @@ class AuthApi {
 
   Future<Map<String, dynamic>> verifyRegisterOtp({required String otp}) async {
     try {
-      final res = await _dio.post(
-        '/accounts/otp/verify',
-        data: {'otp': otp},
-      );
+      final res = await _dio.post('/accounts/otp/verify', data: {'otp': otp});
 
       final data = res.data;
       if (data is Map && data['success'] == true) {
@@ -83,4 +106,3 @@ class AuthApi {
     }
   }
 }
-
