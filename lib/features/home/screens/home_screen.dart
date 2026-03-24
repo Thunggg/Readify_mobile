@@ -14,6 +14,7 @@ part 'home_header_part.dart';
 part 'home_tabs_part.dart';
 part 'home_sections_part.dart';
 part 'home_details_part.dart';
+part 'home_blog_filter_part.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,10 +47,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onSearchChanged(String value) {
+    if (_tabIndex == 1) {
+      _debounce?.cancel();
+      _provider.clearSearchSuggestions();
+      return;
+    }
+
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
       _provider.searchGlobal(value);
     });
+  }
+
+  void _onHeaderSearchTap() {
+    final keyword = _searchController.text.trim();
+    if (_tabIndex == 1) {
+      _openBlogSearchFilterPage(initialKeyword: keyword);
+      return;
+    }
+
+    _openBookSearchFilterPage(initialKeyword: keyword);
   }
 
   Future<void> _openBookSearchFilterPage({String? initialKeyword}) async {
@@ -79,6 +96,24 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
     _provider.clearSearchSuggestions();
+  }
+
+  Future<void> _openBlogSearchFilterPage({String? initialKeyword}) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlogSearchFilterScreen(
+          categories: _provider.blogCategories,
+          initialKeyword: initialKeyword,
+          onOpenDetail: (post) {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => BlogDetailScreen(slug: post.slug, initialPost: post)),
+            );
+          },
+          onToggleFavoriteBlog: _provider.toggleFavoriteBlog,
+          isBlogFavorited: _provider.isBlogFavorited,
+        ),
+      ),
+    );
   }
 
   void _handleSearchTap(HomeSearchSuggestion item) {
@@ -117,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   searching: _provider.searching,
                   suggestions: _provider.searchSuggestions,
                   onLogoTap: () => setState(() => _tabIndex = 0),
-                  onSearchTap: () => _openBookSearchFilterPage(initialKeyword: _searchController.text),
+                  onSearchTap: _onHeaderSearchTap,
                   onSearchChanged: _onSearchChanged,
                   onSelectSuggestion: _handleSearchTap,
                   onProfileMenuTap: (value) {

@@ -337,7 +337,9 @@ class BlogDetailScreen extends StatefulWidget {
 class _BlogDetailScreenState extends State<BlogDetailScreen> {
   final HomeService _service = HomeService();
   HomeBlogPost? _post;
+  List<HomeBlogPost> _relatedPosts = const [];
   bool _loading = true;
+  bool _loadingRelated = true;
 
   @override
   void initState() {
@@ -345,6 +347,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
     _post = widget.initialPost;
     _loading = _post == null;
     _load();
+    _loadRelated();
   }
 
   Future<void> _load() async {
@@ -356,9 +359,27 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
     });
   }
 
+  Future<void> _loadRelated() async {
+    try {
+      final items = await _service.getBlogs(sortBy: 'popular', limit: 6);
+      if (!mounted) return;
+      setState(() {
+        _relatedPosts = items
+            .where((item) => item.slug != widget.slug)
+            .take(5)
+            .toList(growable: false);
+        _loadingRelated = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingRelated = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final post = _post;
+    final publishedAtText = post?.publishedAt != null ? DateFormat('dd/MM/yyyy').format(post!.publishedAt!) : null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Chi tiết bài viết')),
@@ -366,22 +387,156 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
           ? const Center(child: CircularProgressIndicator())
           : post == null
               ? const Center(child: Text('Không có dữ liệu'))
-              : ListView(
-                  padding: const EdgeInsets.all(14),
-                  children: [
-                    SizedBox(height: 220, child: _NetworkImage(url: post.featuredImage)),
-                    const SizedBox(height: 12),
-                    Text(post.title, style: Theme.of(context).textTheme.headlineSmall),
-                    const SizedBox(height: 10),
-                    Text(post.excerpt),
-                    const SizedBox(height: 10),
-                    if (post.tags.isNotEmpty)
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: post.tags.map((e) => Chip(label: Text('#$e'))).toList(growable: false),
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: 230,
+                        child: _NetworkImage(url: post.featuredImage),
                       ),
-                  ],
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              post.title,
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 6,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                if (publishedAtText != null)
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.calendar_today_outlined, size: 14),
+                                      const SizedBox(width: 4),
+                                      Text(publishedAtText),
+                                    ],
+                                  ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.visibility_outlined, size: 16),
+                                    const SizedBox(width: 4),
+                                    Text('${post.viewCount ?? 0} lượt xem'),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            if (post.tags.isNotEmpty)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: post.tags
+                                    .map((e) => Chip(label: Text('#$e')))
+                                    .toList(growable: false),
+                              ),
+                            const SizedBox(height: 18),
+                            Text(
+                              'Nội dung',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              post.excerpt,
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.7),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Bài viết này hiện đang hiển thị phần tóm tắt. Có thể mở rộng trường nội dung đầy đủ khi backend trả về body/content.',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.75),
+                                    height: 1.6,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'Bài viết liên quan',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 238,
+                        child: _loadingRelated
+                            ? const Center(child: CircularProgressIndicator())
+                            : _relatedPosts.isEmpty
+                                ? const Center(child: Text('Chưa có bài viết liên quan'))
+                                : ListView.separated(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    scrollDirection: Axis.horizontal,
+                                    itemBuilder: (context, index) {
+                                      final item = _relatedPosts[index];
+                                      return SizedBox(
+                                        width: 210,
+                                        child: InkWell(
+                                          onTap: () {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (_) => BlogDetailScreen(slug: item.slug, initialPost: item),
+                                              ),
+                                            );
+                                          },
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Ink(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(alpha: 0.03),
+                                              borderRadius: BorderRadius.circular(12),
+                                              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(10),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  ClipRRect(
+                                                    borderRadius: BorderRadius.circular(10),
+                                                    child: SizedBox(
+                                                      height: 110,
+                                                      width: double.infinity,
+                                                      child: _NetworkImage(url: item.featuredImage),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 10),
+                                                  Text(
+                                                    item.title,
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: const TextStyle(fontWeight: FontWeight.w700),
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    item.excerpt,
+                                                    maxLines: 3,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                                    itemCount: _relatedPosts.length,
+                                  ),
+                      ),
+                    ],
+                  ),
                 ),
     );
   }

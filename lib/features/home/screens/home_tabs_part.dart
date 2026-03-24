@@ -202,32 +202,30 @@ class _BlogsTab extends StatelessWidget {
     if (provider.loading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (posts.isEmpty) {
-      return const Center(child: Text('Chưa có bài viết'));
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(12),
-      itemBuilder: (context, index) {
-        final post = posts[index];
-        return ListTile(
-          onTap: () => onOpenDetail(post),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
-          ),
-          leading: SizedBox(width: 44, child: _NetworkImage(url: post.featuredImage)),
-          title: Text(post.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-          subtitle: Text(post.excerpt, maxLines: 2, overflow: TextOverflow.ellipsis),
-          trailing: IconButton(
-            icon: Icon(isBlogFavorited(post.id) ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent),
-            onPressed: () => onToggleFavoriteBlog(post),
-          ),
-        );
-      },
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
-      itemCount: posts.length,
-    );
+    return posts.isEmpty
+        ? const Center(child: Text('Chưa có bài viết'))
+        : ListView.separated(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            itemBuilder: (context, index) {
+              final post = posts[index];
+              return ListTile(
+                onTap: () => onOpenDetail(post),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
+                ),
+                leading: SizedBox(width: 44, child: _NetworkImage(url: post.featuredImage)),
+                title: Text(post.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                subtitle: Text(post.excerpt, maxLines: 2, overflow: TextOverflow.ellipsis),
+                trailing: IconButton(
+                  icon: Icon(isBlogFavorited(post.id) ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent),
+                  onPressed: () => onToggleFavoriteBlog(post),
+                ),
+              );
+            },
+            separatorBuilder: (context, index) => const SizedBox(height: 8),
+            itemCount: posts.length,
+          );
   }
 }
 
