@@ -10,7 +10,12 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          title,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
         const Spacer(),
         TextButton(onPressed: onViewAll, child: const Text('Xem tất cả')),
       ],
@@ -56,15 +61,26 @@ class _HeroBannersState extends State<_HeroBanners> {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
-              gradient: const LinearGradient(colors: [Color(0xFF1E2434), Color(0xFF10131C)]),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1E2434), Color(0xFF10131C)],
+              ),
               border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  item.title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 8),
-                Text(item.subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
+                Text(
+                  item.subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const Spacer(),
                 FilledButton(
                   onPressed: () {
@@ -90,7 +106,9 @@ class _HeroBannersState extends State<_HeroBanners> {
                         width: _index == dot ? 14 : 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: _index == dot ? const Color(0xFFB7F04A) : Colors.white30,
+                          color: _index == dot
+                              ? const Color(0xFFB7F04A)
+                              : Colors.white30,
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
@@ -144,7 +162,9 @@ class _BookHorizontal extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(10),
@@ -153,18 +173,42 @@ class _BookHorizontal extends StatelessWidget {
                     children: [
                       Expanded(child: _NetworkImage(url: book.thumbnailUrl)),
                       const SizedBox(height: 8),
-                      Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                      Text(
+                        book.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 4),
-                      Text(book.authorText, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(
+                        book.authorText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Expanded(child: Text(currency.format(book.basePrice), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                          Expanded(
+                            child: Text(
+                              currency.format(book.basePrice),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                           IconButton(
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
-                            icon: Icon(isBookFavorited(book.id) ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent),
-                            onPressed: () => onToggleFavoriteBook(book),
+                            tooltip: 'Thêm vào giỏ',
+                            icon: const Icon(Icons.add_shopping_cart_outlined),
+                            onPressed: () {
+                              CartService.instance.add(book);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Đã thêm "${book.title}" vào giỏ hàng',
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -211,11 +255,27 @@ class _BlogList extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
                 ),
-                leading: SizedBox(width: 46, child: _NetworkImage(url: post.featuredImage)),
-                title: Text(post.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-                subtitle: Text(post.excerpt, maxLines: 2, overflow: TextOverflow.ellipsis),
+                leading: SizedBox(
+                  width: 46,
+                  child: _NetworkImage(url: post.featuredImage),
+                ),
+                title: Text(
+                  post.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  post.excerpt,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 trailing: IconButton(
-                  icon: Icon(isBlogFavorited(post.id) ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent),
+                  icon: Icon(
+                    isBlogFavorited(post.id)
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    color: Colors.redAccent,
+                  ),
                   onPressed: () => onToggleFavoriteBlog(post),
                 ),
               ),
@@ -264,14 +324,29 @@ class _FeaturedBlogCards extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 120, width: double.infinity, child: _NetworkImage(url: post.featuredImage)),
+                    SizedBox(
+                      height: 120,
+                      width: double.infinity,
+                      child: _NetworkImage(url: post.featuredImage),
+                    ),
                     Padding(
                       padding: const EdgeInsets.all(10),
                       child: Row(
                         children: [
-                          Expanded(child: Text(post.title, maxLines: 2, overflow: TextOverflow.ellipsis)),
+                          Expanded(
+                            child: Text(
+                              post.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                           IconButton(
-                            icon: Icon(isBlogFavorited(post.id) ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent),
+                            icon: Icon(
+                              isBlogFavorited(post.id)
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: Colors.redAccent,
+                            ),
                             onPressed: () => onToggleFavoriteBlog(post),
                           ),
                         ],
@@ -329,11 +404,19 @@ class BookCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 4),
-                Text(book.authorText, maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  book.authorText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.star_rounded, size: 15, color: Colors.amber),
+                    const Icon(
+                      Icons.star_rounded,
+                      size: 15,
+                      color: Colors.amber,
+                    ),
                     const SizedBox(width: 4),
                     Text((book.averageRating ?? 0).toStringAsFixed(1)),
                   ],
@@ -341,20 +424,33 @@ class BookCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Expanded(child: Text(priceText, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    Expanded(
+                      child: Text(
+                        priceText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       tooltip: 'Thêm vào giỏ',
                       onPressed: onAddToCart,
-                      icon: const Icon(Icons.add_shopping_cart_outlined, size: 18),
+                      icon: const Icon(
+                        Icons.add_shopping_cart_outlined,
+                        size: 18,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       tooltip: 'Yêu thích',
-                      icon: Icon(favorited ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent, size: 18),
+                      icon: Icon(
+                        favorited ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.redAccent,
+                        size: 18,
+                      ),
                       onPressed: onToggleFavorite,
                     ),
                   ],
@@ -372,7 +468,10 @@ class BookCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
       ),
-      leading: SizedBox(width: 46, child: _NetworkImage(url: book.thumbnailUrl)),
+      leading: SizedBox(
+        width: 46,
+        child: _NetworkImage(url: book.thumbnailUrl),
+      ),
       title: Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,7 +484,13 @@ class BookCard extends StatelessWidget {
               const SizedBox(width: 4),
               Text((book.averageRating ?? 0).toStringAsFixed(1)),
               const SizedBox(width: 8),
-              Expanded(child: Text(priceText, maxLines: 1, overflow: TextOverflow.ellipsis)),
+              Expanded(
+                child: Text(
+                  priceText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ],
@@ -402,7 +507,11 @@ class BookCard extends StatelessWidget {
             ),
             IconButton(
               onPressed: onToggleFavorite,
-              icon: Icon(favorited ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent, size: 18),
+              icon: Icon(
+                favorited ? Icons.favorite : Icons.favorite_border,
+                color: Colors.redAccent,
+                size: 18,
+              ),
               tooltip: 'Yêu thích',
             ),
           ],
@@ -439,11 +548,23 @@ class BookCardSkeleton extends StatelessWidget {
           children: [
             Expanded(child: box),
             const SizedBox(height: 8),
-            Container(height: 12, width: double.infinity, color: Colors.white.withValues(alpha: 0.10)),
+            Container(
+              height: 12,
+              width: double.infinity,
+              color: Colors.white.withValues(alpha: 0.10),
+            ),
             const SizedBox(height: 6),
-            Container(height: 10, width: 100, color: Colors.white.withValues(alpha: 0.10)),
+            Container(
+              height: 10,
+              width: 100,
+              color: Colors.white.withValues(alpha: 0.10),
+            ),
             const SizedBox(height: 10),
-            Container(height: 10, width: 70, color: Colors.white.withValues(alpha: 0.10)),
+            Container(
+              height: 10,
+              width: 70,
+              color: Colors.white.withValues(alpha: 0.10),
+            ),
           ],
         ),
       );
@@ -464,9 +585,17 @@ class BookCardSkeleton extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(height: 12, width: double.infinity, color: Colors.white.withValues(alpha: 0.10)),
+                Container(
+                  height: 12,
+                  width: double.infinity,
+                  color: Colors.white.withValues(alpha: 0.10),
+                ),
                 const SizedBox(height: 6),
-                Container(height: 10, width: 120, color: Colors.white.withValues(alpha: 0.10)),
+                Container(
+                  height: 10,
+                  width: 120,
+                  color: Colors.white.withValues(alpha: 0.10),
+                ),
               ],
             ),
           ),
@@ -497,7 +626,11 @@ class _NetworkImage extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.image_outlined, size: 26, color: Colors.white.withValues(alpha: 0.85)),
+          Icon(
+            Icons.image_outlined,
+            size: 26,
+            color: Colors.white.withValues(alpha: 0.85),
+          ),
           const SizedBox(height: 6),
           Text(
             'No Image',

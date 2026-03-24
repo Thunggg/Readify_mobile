@@ -9,6 +9,9 @@ import '../../auth/login/login_screen.dart';
 import '../models/home_models.dart';
 import '../providers/home_provider.dart';
 import '../services/home_service.dart';
+import '../../cart/cart_screen.dart';
+import '../../cart/cart_service.dart';
+import '../../order/order_screen.dart';
 
 part 'home_header_part.dart';
 part 'home_tabs_part.dart';
@@ -25,7 +28,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final HomeProvider _provider = HomeProvider();
-  final NumberFormat _currency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
+  final NumberFormat _currency = NumberFormat.currency(
+    locale: 'vi_VN',
+    symbol: 'đ',
+    decimalDigits: 0,
+  );
 
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
@@ -79,7 +86,10 @@ class _HomeScreenState extends State<HomeScreen> {
           initialKeyword: initialKeyword,
           onOpenDetail: (book) {
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => BookDetailScreen(bookId: book.id, initialBook: book)),
+              MaterialPageRoute(
+                builder: (_) =>
+                    BookDetailScreen(bookId: book.id, initialBook: book),
+              ),
             );
           },
           onToggleFavoriteBook: _provider.toggleFavoriteBook,
@@ -106,7 +116,10 @@ class _HomeScreenState extends State<HomeScreen> {
           initialKeyword: initialKeyword,
           onOpenDetail: (post) {
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => BlogDetailScreen(slug: post.slug, initialPost: post)),
+              MaterialPageRoute(
+                builder: (_) =>
+                    BlogDetailScreen(slug: post.slug, initialPost: post),
+              ),
             );
           },
           onToggleFavoriteBlog: _provider.toggleFavoriteBlog,
@@ -122,14 +135,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (item.type == 'book' && item.book != null) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => BookDetailScreen(bookId: item.book!.id, initialBook: item.book!)),
+        MaterialPageRoute(
+          builder: (_) =>
+              BookDetailScreen(bookId: item.book!.id, initialBook: item.book!),
+        ),
       );
       return;
     }
 
     if (item.type == 'blog' && item.blog != null) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => BlogDetailScreen(slug: item.blog!.slug, initialPost: item.blog!)),
+        MaterialPageRoute(
+          builder: (_) =>
+              BlogDetailScreen(slug: item.blog!.slug, initialPost: item.blog!),
+        ),
       );
     }
   }
@@ -157,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onSelectSuggestion: _handleSearchTap,
                   onProfileMenuTap: (value) {
                     if (value == 'profile') {
-                      setState(() => _tabIndex = 3);
+                      setState(() => _tabIndex = 2);
                       return;
                     }
                     if (value == 'logout') {
@@ -184,12 +203,22 @@ class _HomeScreenState extends State<HomeScreen> {
                         onOpenBlogsTab: () => setState(() => _tabIndex = 1),
                         onOpenBookDetail: (book) {
                           Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => BookDetailScreen(bookId: book.id, initialBook: book)),
+                            MaterialPageRoute(
+                              builder: (_) => BookDetailScreen(
+                                bookId: book.id,
+                                initialBook: book,
+                              ),
+                            ),
                           );
                         },
                         onOpenBlogDetail: (post) {
                           Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => BlogDetailScreen(slug: post.slug, initialPost: post)),
+                            MaterialPageRoute(
+                              builder: (_) => BlogDetailScreen(
+                                slug: post.slug,
+                                initialPost: post,
+                              ),
+                            ),
                           );
                         },
                         onToggleFavoriteBook: _provider.toggleFavoriteBook,
@@ -201,13 +230,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         provider: _provider,
                         onOpenDetail: (post) {
                           Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => BlogDetailScreen(slug: post.slug, initialPost: post)),
+                            MaterialPageRoute(
+                              builder: (_) => BlogDetailScreen(
+                                slug: post.slug,
+                                initialPost: post,
+                              ),
+                            ),
                           );
                         },
                         onToggleFavoriteBlog: _provider.toggleFavoriteBlog,
                         isBlogFavorited: _provider.isBlogFavorited,
                       ),
-                      const Center(child: Text('Giỏ hàng trống')), // Temporary Cart tab
                       _ProfileTab(provider: _provider),
                     ],
                   ),
@@ -220,12 +253,24 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: isMobile
           ? NavigationBar(
               selectedIndex: _tabIndex,
-              onDestinationSelected: (value) => setState(() => _tabIndex = value),
+              onDestinationSelected: (value) =>
+                  setState(() => _tabIndex = value),
               destinations: const [
-                NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Trang chủ'),
-                NavigationDestination(icon: Icon(Icons.article_outlined), selectedIcon: Icon(Icons.article), label: 'Blog'),
-                NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), selectedIcon: Icon(Icons.shopping_cart), label: 'Giỏ hàng'),
-                NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Cá nhân'),
+                NavigationDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home),
+                  label: 'Trang chủ',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.article_outlined),
+                  selectedIcon: Icon(Icons.article),
+                  label: 'Blog',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: 'Cá nhân',
+                ),
               ],
             )
           : null,

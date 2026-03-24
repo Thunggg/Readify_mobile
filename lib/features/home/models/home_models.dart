@@ -70,6 +70,37 @@ class HomeBook {
   }
 }
 
+class HomeOrderItem {
+  const HomeOrderItem({
+    required this.title,
+    required this.quantity,
+    required this.price,
+  });
+
+  final String title;
+  final int quantity;
+  final int price;
+}
+
+class HomeOrder {
+  const HomeOrder({
+    required this.id,
+    required this.createdAt,
+    required this.total,
+    required this.status,
+    this.items = const [],
+  });
+
+  final String id;
+  final DateTime createdAt;
+  final int total;
+  final String status; // e.g. 'Pending', 'Delivered'
+  final List<HomeOrderItem> items;
+
+  String get shortDate =>
+      '${createdAt.day}/${createdAt.month}/${createdAt.year}';
+}
+
 class HomeBlogPost {
   const HomeBlogPost({
     required this.id,

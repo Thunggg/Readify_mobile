@@ -43,7 +43,13 @@ class _TopHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                    child: Text('Readify', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                    child: Text(
+                      'Readify',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -62,25 +68,84 @@ class _TopHeader extends StatelessWidget {
                         tooltip: 'Mở trang bộ lọc',
                       ),
                       isDense: true,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
+                // Cart button (listens for changes)
+                AnimatedBuilder(
+                  animation: CartService.instance,
+                  builder: (context, _) {
+                    final count = CartService.instance.totalCount;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const CartScreen(),
+                            ),
+                          ),
+                          icon: const Icon(Icons.shopping_cart_outlined),
+                          tooltip: 'Giỏ hàng',
+                        ),
+                        if (count > 0)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                count > 99 ? '99+' : '$count',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    IconButton(onPressed: () {}, icon: const Icon(Icons.notifications_none_rounded)),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.notifications_none_rounded),
+                    ),
                     if (unreadNotifications > 0)
                       Positioned(
                         right: 8,
                         top: 8,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                          decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(999)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
                           child: Text(
-                            unreadNotifications > 99 ? '99+' : '$unreadNotifications',
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+                            unreadNotifications > 99
+                                ? '99+'
+                                : '$unreadNotifications',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
@@ -89,15 +154,24 @@ class _TopHeader extends StatelessWidget {
                 PopupMenuButton<String>(
                   onSelected: onProfileMenuTap,
                   itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'profile', child: Text('Trang cá nhân')),
+                    PopupMenuItem(
+                      value: 'profile',
+                      child: Text('Trang cá nhân'),
+                    ),
                     PopupMenuItem(value: 'logout', child: Text('Đăng xuất')),
                   ],
                   child: Row(
                     children: [
-                      const CircleAvatar(radius: 14, child: Icon(Icons.person, size: 18)),
+                      const CircleAvatar(
+                        radius: 14,
+                        child: Icon(Icons.person, size: 18),
+                      ),
                       if (!compact) ...[
                         const SizedBox(width: 6),
-                        Text(userName, style: Theme.of(context).textTheme.bodySmall),
+                        Text(
+                          userName,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ],
                     ],
                   ),
@@ -105,8 +179,7 @@ class _TopHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (searching)
-            const LinearProgressIndicator(minHeight: 2),
+          if (searching) const LinearProgressIndicator(minHeight: 2),
         ],
       ),
     );
@@ -114,17 +187,14 @@ class _TopHeader extends StatelessWidget {
 }
 
 class _DesktopTabBar extends StatelessWidget {
-  const _DesktopTabBar({
-    required this.currentIndex,
-    required this.onTap,
-  });
+  const _DesktopTabBar({required this.currentIndex, required this.onTap});
 
   final int currentIndex;
   final ValueChanged<int> onTap;
 
   @override
   Widget build(BuildContext context) {
-    const tabs = ['Trang chủ', 'Blog', 'Giỏ hàng', 'Cá nhân'];
+    const tabs = ['Trang chủ', 'Blog', 'Cá nhân'];
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
