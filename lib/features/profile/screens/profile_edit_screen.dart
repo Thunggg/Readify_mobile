@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_error.dart';
+import '../data/media_api.dart';
 import '../data/profile_api.dart';
 
 class ProfileEditScreen extends StatefulWidget {
@@ -16,6 +18,8 @@ class ProfileEditScreen extends StatefulWidget {
 class _ProfileEditScreenState extends State<ProfileEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final ProfileApi _api = ProfileApi();
+  final MediaApi _mediaApi = MediaApi();
+  final ImagePicker _picker = ImagePicker();
 
   late final TextEditingController _firstName;
   late final TextEditingController _lastName;
@@ -27,6 +31,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   DateTime? _dob;
   int _sex = 0;
   bool _saving = false;
+  bool _uploadingAvatar = false;
 
   @override
   void initState() {
@@ -108,6 +113,32 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(prettyDioError(e))));
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _pickAndUploadAvatar() async {
+    if (_saving || _uploadingAvatar) return;
+    try {
+      final picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
+
+      setState(() => _uploadingAvatar = true);
+      final url = await _mediaApi.uploadAvatar(picked);
+      if (!mounted) return;
+      setState(() => _avatarUrl.text = url);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Avatar uploaded')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final msg = prettyDioError(e);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    } finally {
+      if (mounted) setState(() => _uploadingAvatar = false);
     }
   }
 
@@ -214,10 +245,61 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 onChanged: _saving ? null : (v) => setState(() => _sex = v ?? 0),
               ),
               const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111111),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 26,
+                      backgroundColor: Colors.white.withValues(alpha: 0.08),
+                      backgroundImage: _avatarUrl.text.trim().isNotEmpty ? NetworkImage(_avatarUrl.text.trim()) : null,
+                      child: _avatarUrl.text.trim().isNotEmpty ? null : const Icon(Icons.person, size: 26),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Avatar',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _avatarUrl.text.trim().isEmpty ? 'No avatar uploaded' : 'Uploaded',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.60)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: accent,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: (_saving || _uploadingAvatar) ? null : _pickAndUploadAvatar,
+                      child: _uploadingAvatar
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Choose', style: TextStyle(fontWeight: FontWeight.w800)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               _pillField(
                 controller: _avatarUrl,
-                hintText: 'Avatar URL',
-                prefixIcon: Icons.image_outlined,
+                hintText: 'Avatar URL (optional)',
+                prefixIcon: Icons.link,
                 enabled: !_saving,
               ),
               const SizedBox(height: 12),
