@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/api/api_error.dart';
+import '../../home/screens/home_screen.dart';
 import '../data/auth_api.dart';
 import '../register/register_screen.dart';
 
@@ -56,7 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Login successful')),
       );
-      // TODO: Navigate to home when available.
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -217,6 +220,18 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: _loading
+                              ? null
+                              : () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (_) => const HomeScreen()),
+                                  );
+                                },
+                          icon: const Icon(Icons.home_outlined),
+                          label: const Text('Vào trang chủ (guest)'),
                         ),
                       ],
                     ),
