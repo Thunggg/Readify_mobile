@@ -205,25 +205,96 @@ class _BlogsTab extends StatelessWidget {
     return posts.isEmpty
         ? const Center(child: Text('Chưa có bài viết'))
         : ListView.separated(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
             itemBuilder: (context, index) {
               final post = posts[index];
-              return ListTile(
+              final published = post.publishedAt != null ? DateFormat('dd/MM/yyyy').format(post.publishedAt!) : '--/--/----';
+
+              return InkWell(
                 onTap: () => onOpenDetail(post),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
-                ),
-                leading: SizedBox(width: 44, child: _NetworkImage(url: post.featuredImage)),
-                title: Text(post.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-                subtitle: Text(post.excerpt, maxLines: 2, overflow: TextOverflow.ellipsis),
-                trailing: IconButton(
-                  icon: Icon(isBlogFavorited(post.id) ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent),
-                  onPressed: () => onToggleFavoriteBlog(post),
+                borderRadius: BorderRadius.circular(14),
+                child: Ink(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.03),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  ),
+                  child: SizedBox(
+                    height: 100,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 96,
+                          height: 96,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: _NetworkImage(url: post.featuredImage),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  post.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Expanded(
+                                child: Text(
+                                  post.excerpt,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: Colors.white.withValues(alpha: 0.8),
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              SizedBox(
+                                height: 24,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '$published • ${post.viewCount ?? 0} lượt xem',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context).textTheme.bodySmall,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    IconButton(
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints.tightFor(width: 24, height: 24),
+                                      visualDensity: VisualDensity.compact,
+                                      iconSize: 20,
+                                      icon: Icon(
+                                        isBlogFavorited(post.id) ? Icons.favorite : Icons.favorite_border,
+                                        color: Colors.redAccent,
+                                      ),
+                                      onPressed: () => onToggleFavoriteBlog(post),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               );
             },
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
+            separatorBuilder: (context, index) => const SizedBox(height: 10),
             itemCount: posts.length,
           );
   }

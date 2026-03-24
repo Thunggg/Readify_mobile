@@ -161,6 +161,7 @@ class _BlogSearchFilterScreenState extends State<BlogSearchFilterScreen> {
   @override
   Widget build(BuildContext context) {
     final items = _visiblePosts;
+    final selectedFilterCount = _selectedTags.length + (_keyword.isNotEmpty ? 1 : 0);
 
     return Scaffold(
       appBar: AppBar(
@@ -171,9 +172,40 @@ class _BlogSearchFilterScreenState extends State<BlogSearchFilterScreen> {
       ),
       body: Column(
         children: [
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.article_outlined, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Kết quả: ${items.length} bài viết',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                if (selectedFilterCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blueAccent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text('$selectedFilterCount bộ lọc'),
+                  ),
+              ],
+            ),
+          ),
           if (_keyword.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Chip(
@@ -225,6 +257,7 @@ class _BlogSearchFilterScreenState extends State<BlogSearchFilterScreen> {
                             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                             itemBuilder: (context, index) {
                               final post = items[index];
+                              final published = post.publishedAt != null ? DateFormat('dd/MM/yyyy').format(post.publishedAt!) : '--/--/----';
                               return InkWell(
                                 onTap: () => widget.onOpenDetail(post),
                                 borderRadius: BorderRadius.circular(14),
@@ -235,65 +268,75 @@ class _BlogSearchFilterScreenState extends State<BlogSearchFilterScreen> {
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                                   ),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      SizedBox(
-                                        width: 92,
-                                        height: 92,
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(10),
-                                          child: _NetworkImage(url: post.featuredImage),
+                                  child: SizedBox(
+                                    height: 100,
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        SizedBox(
+                                          width: 92,
+                                          height: 92,
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: _NetworkImage(url: post.featuredImage),
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              post.title,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              post.excerpt,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Row(
-                                              children: [
-                                                if (post.publishedAt != null)
-                                                  Text(
-                                                    DateFormat('dd/MM/yyyy').format(post.publishedAt!),
-                                                    style: Theme.of(context).textTheme.bodySmall,
-                                                  ),
-                                                const SizedBox(width: 10),
-                                                if ((post.viewCount ?? 0) > 0)
-                                                  Text(
-                                                    '${post.viewCount} lượt xem',
-                                                    style: Theme.of(context).textTheme.bodySmall,
-                                                  ),
-                                                const Spacer(),
-                                                IconButton(
-                                                  visualDensity: VisualDensity.compact,
-                                                  onPressed: () => widget.onToggleFavoriteBlog(post),
-                                                  icon: Icon(
-                                                    widget.isBlogFavorited(post.id)
-                                                        ? Icons.favorite
-                                                        : Icons.favorite_border,
-                                                    color: Colors.redAccent,
-                                                  ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  post.title,
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                                                 ),
-                                              ],
-                                            ),
-                                          ],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Expanded(
+                                                child: Text(
+                                                  post.excerpt,
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              SizedBox(
+                                                height: 24,
+                                                child: Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        '$published • ${post.viewCount ?? 0} lượt xem',
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: Theme.of(context).textTheme.bodySmall,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    IconButton(
+                                                      padding: EdgeInsets.zero,
+                                                      constraints: const BoxConstraints.tightFor(width: 24, height: 24),
+                                                      visualDensity: VisualDensity.compact,
+                                                      onPressed: () => widget.onToggleFavoriteBlog(post),
+                                                      iconSize: 20,
+                                                      icon: Icon(
+                                                        widget.isBlogFavorited(post.id)
+                                                            ? Icons.favorite
+                                                            : Icons.favorite_border,
+                                                        color: Colors.redAccent,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );

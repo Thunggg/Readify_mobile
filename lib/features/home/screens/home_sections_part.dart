@@ -481,26 +481,49 @@ class _NetworkImage extends StatelessWidget {
 
   final String? url;
 
+  Widget _buildFallback() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.blueGrey.withValues(alpha: 0.35),
+            Colors.blueGrey.withValues(alpha: 0.15),
+          ],
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.image_outlined, size: 26, color: Colors.white.withValues(alpha: 0.85)),
+          const SizedBox(height: 6),
+          Text(
+            'No Image',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.white.withValues(alpha: 0.85),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final safe = url?.trim() ?? '';
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: safe.isEmpty
-          ? Container(
-              color: Colors.white.withValues(alpha: 0.08),
-              alignment: Alignment.center,
-              child: const Icon(Icons.image_not_supported_outlined),
-            )
+          ? _buildFallback()
           : Image.network(
               safe,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.broken_image_outlined),
-                );
+                return _buildFallback();
               },
             ),
     );

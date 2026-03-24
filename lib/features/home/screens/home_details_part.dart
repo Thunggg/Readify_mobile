@@ -336,10 +336,17 @@ class BlogDetailScreen extends StatefulWidget {
 
 class _BlogDetailScreenState extends State<BlogDetailScreen> {
   final HomeService _service = HomeService();
+  final TextEditingController _commentNameController = TextEditingController();
+  final TextEditingController _commentEmailController = TextEditingController();
+  final TextEditingController _commentContentController = TextEditingController();
+
   HomeBlogPost? _post;
   List<HomeBlogPost> _relatedPosts = const [];
+  List<HomeBlogComment> _comments = const [];
   bool _loading = true;
   bool _loadingRelated = true;
+  bool _loadingComments = true;
+  bool _submittingComment = false;
 
   @override
   void initState() {
@@ -348,6 +355,15 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
     _loading = _post == null;
     _load();
     _loadRelated();
+    _loadComments();
+  }
+
+  @override
+  void dispose() {
+    _commentNameController.dispose();
+    _commentEmailController.dispose();
+    _commentContentController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -373,6 +389,65 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _loadingRelated = false);
+    }
+  }
+
+  Future<void> _loadComments() async {
+    final postId = _post?.id;
+    if (postId == null || postId.isEmpty) {
+      if (mounted) setState(() => _loadingComments = false);
+      return;
+    }
+
+    try {
+      final comments = await _service.getBlogComments(postId, page: 1, limit: 30);
+      if (!mounted) return;
+      setState(() {
+        _comments = comments;
+        _loadingComments = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingComments = false);
+    }
+  }
+
+  Future<void> _submitComment() async {
+    final postId = _post?.id;
+    final name = _commentNameController.text.trim();
+    final email = _commentEmailController.text.trim();
+    final content = _commentContentController.text.trim();
+
+    if (postId == null || postId.isEmpty) return;
+    if (name.isEmpty || email.isEmpty || content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập đầy đủ tên, email và nội dung bình luận')),
+      );
+      return;
+    }
+
+    setState(() => _submittingComment = true);
+    try {
+      await _service.createBlogComment(
+        postId,
+        authorName: name,
+        authorEmail: email,
+        content: content,
+      );
+
+      if (!mounted) return;
+      _commentContentController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã gửi bình luận, vui lòng chờ duyệt')), 
+      );
+      await _loadComments();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gửi bình luận thất bại: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _submittingComment = false);
     }
   }
 
@@ -458,6 +533,112 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                                     height: 1.6,
                                   ),
                             ),
+                            const SizedBox(height: 28),
+                            Text(
+                              'Bình luận',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: _commentNameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Tên của bạn',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _commentEmailController,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _commentContentController,
+                              minLines: 3,
+                              maxLines: 5,
+                              decoration: const InputDecoration(
+                                labelText: 'Nội dung bình luận',
+                                border: OutlineInputBorder(),
+                                alignLabelWithHint: true,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: _submittingComment ? null : _submitComment,
+                                icon: _submittingComment
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.send_outlined),
+                                label: Text(_submittingComment ? 'Đang gửi...' : 'Gửi bình luận'),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            if (_loadingComments)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                child: Center(child: CircularProgressIndicator()),
+                              )
+                            else if (_comments.isEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.03),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                                ),
+                                child: const Text('Chưa có bình luận nào'),
+                              )
+                            else
+                              Column(
+                                children: _comments
+                                    .map(
+                                      (comment) => Container(
+                                        width: double.infinity,
+                                        margin: const EdgeInsets.only(bottom: 10),
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(alpha: 0.03),
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    comment.authorName,
+                                                    style: const TextStyle(fontWeight: FontWeight.w700),
+                                                  ),
+                                                ),
+                                                if (comment.createdAt != null)
+                                                  Text(
+                                                    DateFormat('dd/MM/yyyy HH:mm').format(comment.createdAt!),
+                                                    style: Theme.of(context).textTheme.bodySmall,
+                                                  ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(comment.content),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                    .toList(growable: false),
+                              ),
                           ],
                         ),
                       ),

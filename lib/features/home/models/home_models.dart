@@ -79,6 +79,7 @@ class HomeBlogPost {
     required this.publishedAt,
     this.featuredImage,
     this.viewCount,
+    this.commentCount,
     this.tags = const [],
   });
 
@@ -89,6 +90,7 @@ class HomeBlogPost {
   final DateTime? publishedAt;
   final String? featuredImage;
   final int? viewCount;
+  final int? commentCount;
   final List<String> tags;
 
   factory HomeBlogPost.fromJson(Map<String, dynamic> json) {
@@ -109,7 +111,34 @@ class HomeBlogPost {
       publishedAt: _toDateTime(json['publishedAt']),
       featuredImage: json['featuredImage']?.toString(),
       viewCount: _toNullableInt(json['viewCount']),
+      commentCount: _toNullableInt(json['commentCount']),
       tags: tags,
+    );
+  }
+}
+
+class HomeBlogComment {
+  const HomeBlogComment({
+    required this.id,
+    required this.authorName,
+    required this.authorEmail,
+    required this.content,
+    required this.createdAt,
+  });
+
+  final String id;
+  final String authorName;
+  final String authorEmail;
+  final String content;
+  final DateTime? createdAt;
+
+  factory HomeBlogComment.fromJson(Map<String, dynamic> json) {
+    return HomeBlogComment(
+      id: (json['_id'] ?? '').toString(),
+      authorName: (json['authorName'] ?? 'Ẩn danh').toString(),
+      authorEmail: (json['authorEmail'] ?? '').toString(),
+      content: (json['content'] ?? '').toString(),
+      createdAt: _toDateTime(json['createdAt']),
     );
   }
 }
