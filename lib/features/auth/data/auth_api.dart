@@ -8,6 +8,20 @@ class AuthApi {
 
   final Dio _dio;
 
+  Future<void> logout() async {
+    try {
+      final res = await _dio.post('/auth/logout');
+      final data = res.data;
+      if (data is Map && data['success'] == true) return;
+      if (data is Map && data['message'] is String) {
+        throw ApiError(data['message'] as String, statusCode: res.statusCode);
+      }
+      throw ApiError('Logout failed', statusCode: res.statusCode);
+    } on DioException catch (e) {
+      throw ApiError(prettyDioError(e), statusCode: e.response?.statusCode);
+    }
+  }
+
   Future<void> login({required String email, required String password}) async {
     try {
       final res = await _dio.post(
