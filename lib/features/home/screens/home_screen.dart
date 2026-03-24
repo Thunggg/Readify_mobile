@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../book/screens/book_search_filter_screen.dart';
+import '../../book/services/book_filter_storage_service.dart';
 import '../../auth/login/login_screen.dart';
 import '../models/home_models.dart';
 import '../providers/home_provider.dart';
@@ -51,8 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _openBookSearchFilterPage({String? initialKeyword}) {
-    Navigator.of(context).push(
+  Future<void> _openBookSearchFilterPage({String? initialKeyword}) async {
+    // Navigate to Search Filter page and wait for it to close
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => BookSearchFilterScreen(
           categories: _provider.bookCategories,
@@ -68,6 +70,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+
+    // Khi trở về từ màn search/filter: xóa ô search ngoài header và reset bộ lọc về mặc định.
+    await BookFilterStorageService().clearState();
+    if (mounted) {
+      setState(() {
+        _searchController.clear();
+      });
+    }
+    _provider.clearSearchSuggestions();
   }
 
   void _handleSearchTap(HomeSearchSuggestion item) {
@@ -111,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onSelectSuggestion: _handleSearchTap,
                   onProfileMenuTap: (value) {
                     if (value == 'profile') {
-                      setState(() => _tabIndex = 4);
+                      setState(() => _tabIndex = 3);
                       return;
                     }
                     if (value == 'logout') {
@@ -134,8 +145,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       _HomeTab(
                         provider: _provider,
                         currency: _currency,
-                        onOpenBooksTab: () => setState(() => _tabIndex = 1),
-                        onOpenBlogsTab: () => setState(() => _tabIndex = 2),
+                        onOpenBooksTab: () {},
+                        onOpenBlogsTab: () => setState(() => _tabIndex = 1),
                         onOpenBookDetail: (book) {
                           Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => BookDetailScreen(bookId: book.id, initialBook: book)),
@@ -150,17 +161,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         onToggleFavoriteBlog: _provider.toggleFavoriteBlog,
                         isBookFavorited: _provider.isBookFavorited,
                         isBlogFavorited: _provider.isBlogFavorited,
-                      ),
-                      _BooksTab(
-                        provider: _provider,
-                        currency: _currency,
-                        onOpenDetail: (book) {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => BookDetailScreen(bookId: book.id, initialBook: book)),
-                          );
-                        },
-                        onToggleFavoriteBook: _provider.toggleFavoriteBook,
-                        isBookFavorited: _provider.isBookFavorited,
                       ),
                       _BlogsTab(
                         provider: _provider,
@@ -172,20 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onToggleFavoriteBlog: _provider.toggleFavoriteBlog,
                         isBlogFavorited: _provider.isBlogFavorited,
                       ),
-                      _FavoritesTab(
-                        provider: _provider,
-                        currency: _currency,
-                        onOpenBookDetail: (book) {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => BookDetailScreen(bookId: book.id, initialBook: book)),
-                          );
-                        },
-                        onOpenBlogDetail: (post) {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => BlogDetailScreen(slug: post.slug, initialPost: post)),
-                          );
-                        },
-                      ),
+                      const Center(child: Text('Giỏ hàng trống')), // Temporary Cart tab
                       _ProfileTab(provider: _provider),
                     ],
                   ),
@@ -201,9 +188,8 @@ class _HomeScreenState extends State<HomeScreen> {
               onDestinationSelected: (value) => setState(() => _tabIndex = value),
               destinations: const [
                 NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Trang chủ'),
-                NavigationDestination(icon: Icon(Icons.menu_book_outlined), selectedIcon: Icon(Icons.menu_book), label: 'Sách'),
                 NavigationDestination(icon: Icon(Icons.article_outlined), selectedIcon: Icon(Icons.article), label: 'Blog'),
-                NavigationDestination(icon: Icon(Icons.favorite_border), selectedIcon: Icon(Icons.favorite), label: 'Yêu thích'),
+                NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), selectedIcon: Icon(Icons.shopping_cart), label: 'Giỏ hàng'),
                 NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Cá nhân'),
               ],
             )

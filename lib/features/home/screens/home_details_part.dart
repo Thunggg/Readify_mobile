@@ -60,88 +60,261 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     final book = _book;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Chi tiết sách')),
+      appBar: AppBar(
+        title: const Text('Chi tiết sách'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.shopping_cart_outlined),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Tính năng giỏ hàng đang phát triển')),
+              );
+            },
+          ),
+        ],
+      ),
       body: _loading && book == null
           ? const Center(child: CircularProgressIndicator())
           : book == null
-              ? const Center(child: Text('Không có dữ liệu'))
-              : ListView(
-                  padding: const EdgeInsets.all(14),
-                  children: [
-                    SizedBox(height: 260, child: _NetworkImage(url: book.thumbnailUrl)),
-                    const SizedBox(height: 12),
-                    Text(book.title, style: Theme.of(context).textTheme.headlineSmall),
-                    const SizedBox(height: 6),
-                    Text(book.authorText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
-                    const SizedBox(height: 10),
-                    Text(
-                      _currency.format(book.basePrice),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: const Color(0xFFB7F04A),
-                            fontWeight: FontWeight.w700,
+              ? const Center(child: Text('Không tìm thấy dữ liệu sách'))
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Cover
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(32),
+                            bottomRight: Radius.circular(32),
                           ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text('Đánh giá: ${(book.averageRating ?? 0).toStringAsFixed(1)}'),
-                    const SizedBox(height: 10),
-                    Text(book.description ?? 'Chưa có mô tả'),
-                    const SizedBox(height: 18),
-                    Text(
-                      'Sách liên quan',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 230,
-                      child: _loadingRelated
-                          ? const Center(child: CircularProgressIndicator())
-                          : _relatedBooks.isEmpty
-                              ? const Center(child: Text('Chưa có sách liên quan'))
-                              : ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  itemBuilder: (context, index) {
-                                    final item = _relatedBooks[index];
-                                    return SizedBox(
-                                      width: 150,
-                                      child: InkWell(
-                                        onTap: () {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) => BookDetailScreen(bookId: item.id, initialBook: item),
-                                            ),
-                                          );
-                                        },
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Ink(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.04),
-                                            borderRadius: BorderRadius.circular(12),
-                                            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                                          ),
+                        ),
+                        child: Center(
+                          child: Hero(
+                            tag: 'book_cover_${book.id}',
+                            child: Container(
+                              height: 280,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: _NetworkImage(url: book.thumbnailUrl),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      
+                      // Title & Author
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              book.title,
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                height: 1.3,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(Icons.person_outline, size: 20, color: Colors.grey),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    book.authorText,
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            const SizedBox(height: 16),
+                            // Price & Rating
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  _currency.format(book.basePrice),
+                                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                    color: const Color(0xFFB7F04A),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        (book.averageRating ?? 0).toStringAsFixed(1),
+                                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            // Categories
+                            if (book.categories.isNotEmpty) ...[
+                              const SizedBox(height: 20),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: book.categories.map((c) => Chip(
+                                  label: Text(c.name),
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+                                  side: BorderSide.none,
+                                )).toList(),
+                              ),
+                            ],
+
+                            const SizedBox(height: 24),
+                            // Action Buttons
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Đã thêm vào giỏ hàng!')),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.add_shopping_cart),
+                                    label: const Text('Thêm vào giỏ'),
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: FilledButton(
+                                    onPressed: () {},
+                                    style: FilledButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                    child: const Text('Mua ngay', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 32),
+                            // Description Section
+                            Text(
+                              'Giới thiệu sách',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              book.description ?? 'Chưa có mô tả cho sách này.',
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                height: 1.6,
+                                color: Colors.white.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Related Books
+                      const SizedBox(height: 32),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          'Sách cùng thể loại',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 250,
+                        child: _loadingRelated
+                            ? const Center(child: CircularProgressIndicator())
+                            : _relatedBooks.isEmpty
+                                ? const Center(child: Text('Chưa có sách liên quan'))
+                                : ListView.separated(
+                                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                                    scrollDirection: Axis.horizontal,
+                                    itemBuilder: (context, index) {
+                                      final item = _relatedBooks[index];
+                                      return SizedBox(
+                                        width: 140,
+                                        child: InkWell(
+                                          onTap: () {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (_) => BookDetailScreen(bookId: item.id, initialBook: item),
+                                              ),
+                                            );
+                                          },
+                                          borderRadius: BorderRadius.circular(12),
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Expanded(child: _NetworkImage(url: item.thumbnailUrl)),
-                                              const SizedBox(height: 6),
-                                              Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                                              Expanded(
+                                                child: ClipRRect(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  child: SizedBox(
+                                                    width: 140,
+                                                    child: _NetworkImage(url: item.thumbnailUrl),
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                item.title, 
+                                                maxLines: 2, 
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                              ),
                                               const SizedBox(height: 4),
                                               Text(
                                                 _currency.format(item.basePrice),
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(color: Color(0xFFB7F04A), fontWeight: FontWeight.bold),
                                               ),
                                             ],
                                           ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                  separatorBuilder: (context, index) => const SizedBox(width: 10),
-                                  itemCount: _relatedBooks.length,
-                                ),
-                    ),
-                  ],
+                                      );
+                                    },
+                                    separatorBuilder: (context, index) => const SizedBox(width: 16),
+                                    itemCount: _relatedBooks.length,
+                                  ),
+                      ),
+                    ],
+                  ),
                 ),
     );
   }

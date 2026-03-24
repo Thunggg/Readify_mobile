@@ -49,14 +49,18 @@ class _TopHeader extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
-                    readOnly: true,
                     controller: searchController,
-                    onTap: onSearchTap,
                     onChanged: onSearchChanged,
+                    onSubmitted: (_) => onSearchTap(),
+                    textInputAction: TextInputAction.search,
                     decoration: InputDecoration(
-                      hintText: 'Tim sach de mo trang bo loc...',
+                      hintText: 'Tìm kiếm sách...',
                       prefixIcon: const Icon(Icons.search),
-                      suffixIcon: const Icon(Icons.open_in_new),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.open_in_new),
+                        onPressed: onSearchTap,
+                        tooltip: 'Mở trang bộ lọc',
+                      ),
                       isDense: true,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -101,6 +105,8 @@ class _TopHeader extends StatelessWidget {
               ],
             ),
           ),
+          if (searching)
+            const LinearProgressIndicator(minHeight: 2),
         ],
       ),
     );
@@ -118,7 +124,7 @@ class _DesktopTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const tabs = ['Trang chủ', 'Sách', 'Blog', 'Yêu thích', 'Cá nhân'];
+    const tabs = ['Trang chủ', 'Blog', 'Giỏ hàng', 'Cá nhân'];
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),

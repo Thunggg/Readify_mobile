@@ -130,12 +130,13 @@ class _BooksTabState extends State<_BooksTab> {
     super.dispose();
   }
 
-  void _openBookSearchPage() {
+  void _openBookSearchPage([String? keyword]) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => BookSearchFilterScreen(
           categories: widget.provider.bookCategories,
           currency: widget.currency,
+          initialKeyword: keyword,
           onOpenDetail: widget.onOpenDetail,
           onToggleFavoriteBook: widget.onToggleFavoriteBook,
           isBookFavorited: widget.isBookFavorited,
@@ -151,13 +152,17 @@ class _BooksTabState extends State<_BooksTab> {
       child: Column(
         children: [
           TextField(
-            readOnly: true,
             controller: _searchController,
-            onTap: _openBookSearchPage,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (val) => _openBookSearchPage(val),
             decoration: InputDecoration(
               hintText: 'Tìm kiếm theo tiêu đề/tác giả',
               prefixIcon: const Icon(Icons.search),
-              suffixIcon: const Icon(Icons.open_in_new),
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.open_in_new),
+                onPressed: () => _openBookSearchPage(_searchController.text),
+                tooltip: 'Mở trang lọc sách',
+              ),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
@@ -165,24 +170,12 @@ class _BooksTabState extends State<_BooksTab> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: _openBookSearchPage,
+              onPressed: () => _openBookSearchPage(),
               icon: const Icon(Icons.menu_book_outlined),
               label: const Text('Mở trang Sách (Search / Sort / Filter)'),
             ),
           ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: const Text(
-              'Toan bo tinh nang tim kiem, sap xep va bo loc Sach da duoc tach ra 1 module rieng trong 1 trang chuyen biet.',
-            ),
-          ),
+          
         ],
       ),
     );
