@@ -310,56 +310,182 @@ class _FavoritesTab extends StatelessWidget {
   }
 }
 
-class _ProfileTab extends StatelessWidget {
+class _ProfileTab extends StatefulWidget {
   const _ProfileTab({required this.provider});
 
   final HomeProvider provider;
 
   @override
+  State<_ProfileTab> createState() => _ProfileTabState();
+}
+
+class _ProfileTabState extends State<_ProfileTab> with AutomaticKeepAliveClientMixin {
+  final ProfileApi _profileApi = ProfileApi();
+  Map<String, dynamic>? _me;
+  bool _loading = false;
+  bool _isGuest = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMe();
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+
+  String _fullName(Map<String, dynamic> me) {
+    final first = (me['firstName'] ?? '').toString().trim();
+    final last = (me['lastName'] ?? '').toString().trim();
+    final name = ('$first $last').trim();
+    return name.isEmpty ? 'User' : name;
+  }
+
+  Future<void> _loadMe() async {
+    setState(() {
+      _loading = true;
+      _isGuest = false;
+    });
+    try {
+      final me = await _profileApi.getMe();
+      if (!mounted) return;
+      setState(() => _me = me);
+    } catch (e) {
+      if (!mounted) return;
+      // 401 -> treat as guest
+      final message = prettyDioError(e);
+      setState(() {
+        _me = null;
+        _isGuest = message.toLowerCase().contains('unauthorized') || message.contains('(401)');
+      });
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _openProfile() async {
+    if (_isGuest) {
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      return;
+    }
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+  }
+
+  Future<void> _logout() async {
+    try {
+      await AuthApi().logout();
+    } catch (_) {}
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Row(
-          children: [
-            const CircleAvatar(radius: 28, child: Icon(Icons.person, size: 28)),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(provider.userName, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-                const Text('Member'),
-              ],
+    super.build(context);
+
+    final provider = widget.provider;
+    final me = _me;
+    final avatarUrl = (me?['avatarUrl'] ?? '').toString().trim();
+    final hasAvatar = avatarUrl.isNotEmpty;
+    final title = me == null ? 'Guest User' : _fullName(me);
+    final subtitle = me == null ? 'Member' : (me['email'] ?? 'Member').toString();
+
+    return RefreshIndicator(
+      onRefresh: _loadMe,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: Colors.white.withValues(alpha: 0.08),
+                backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
+                child: hasAvatar ? null : const Icon(Icons.person, size: 28),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (_loading) ...[
+                          const SizedBox(width: 10),
+                          const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                        ],
+                      ],
+                    ),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.70)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _CountChip(label: 'Sách đã lưu', value: provider.favoriteBooks.length),
+              _CountChip(label: 'Bài viết đã like', value: provider.favoriteBlogs.length),
+              _CountChip(label: 'Bình luận', value: provider.myCommentCount),
+            ],
+          ),
+          if (_isGuest) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen())),
+                icon: const Icon(Icons.login),
+                label: const Text('Đăng nhập để xem hồ sơ'),
+              ),
             ),
           ],
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            _CountChip(label: 'Sách đã lưu', value: provider.favoriteBooks.length),
-            _CountChip(label: 'Bài viết đã like', value: provider.favoriteBlogs.length),
-            _CountChip(label: 'Bình luận', value: provider.myCommentCount),
-          ],
-        ),
-        const SizedBox(height: 18),
-        const _ProfileMenuTile(title: 'Thông tin cá nhân', icon: Icons.badge_outlined),
-        const _ProfileMenuTile(title: 'Sách yêu thích', icon: Icons.menu_book_outlined),
-        const _ProfileMenuTile(title: 'Bài viết đã lưu', icon: Icons.bookmark_outline),
-        const _ProfileMenuTile(title: 'Bình luận của tôi', icon: Icons.chat_bubble_outline),
-        const _ProfileMenuTile(title: 'Cài đặt', icon: Icons.settings_outlined),
-        const _ProfileMenuTile(title: 'Đăng xuất', icon: Icons.logout),
-      ],
+          const SizedBox(height: 18),
+          _ProfileMenuTile(
+            title: 'Thông tin cá nhân',
+            icon: Icons.badge_outlined,
+            onTap: _openProfile,
+          ),
+          const _ProfileMenuTile(title: 'Sách yêu thích', icon: Icons.menu_book_outlined),
+          const _ProfileMenuTile(title: 'Bài viết đã lưu', icon: Icons.bookmark_outline),
+          const _ProfileMenuTile(title: 'Bình luận của tôi', icon: Icons.chat_bubble_outline),
+          const _ProfileMenuTile(title: 'Cài đặt', icon: Icons.settings_outlined),
+          _ProfileMenuTile(
+            title: _isGuest ? 'Đăng nhập' : 'Đăng xuất',
+            icon: _isGuest ? Icons.login : Icons.logout,
+            onTap: _isGuest ? () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen())) : _logout,
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _ProfileMenuTile extends StatelessWidget {
-  const _ProfileMenuTile({required this.title, required this.icon});
+  const _ProfileMenuTile({required this.title, required this.icon, this.onTap});
 
   final String title;
   final IconData icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -367,7 +493,7 @@ class _ProfileMenuTile extends StatelessWidget {
       leading: Icon(icon),
       title: Text(title),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () {},
+      onTap: onTap,
     );
   }
 }
