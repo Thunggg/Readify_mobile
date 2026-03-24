@@ -22,8 +22,8 @@ class BlogSearchFilterScreen extends StatefulWidget {
 
 class _BlogSearchFilterScreenState extends State<BlogSearchFilterScreen> {
   static const _sortOptions = <Map<String, String>>[
-    {'value': 'newest', 'label': 'Mới nhất'},
-    {'value': 'popular', 'label': 'Phổ biến'},
+    {'value': 'newest', 'label': 'Newest'},
+    {'value': 'popular', 'label': 'Popular'},
   ];
 
   final HomeService _service = HomeService();
@@ -165,9 +165,9 @@ class _BlogSearchFilterScreenState extends State<BlogSearchFilterScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Blog - Tìm kiếm & lọc'),
+        title: const Text('Blog - Search & Filter'),
         actions: [
-          TextButton(onPressed: _clearFilters, child: const Text('Đặt lại')),
+          TextButton(onPressed: _clearFilters, child: const Text('Reset')),
         ],
       ),
       body: Column(
@@ -187,7 +187,7 @@ class _BlogSearchFilterScreenState extends State<BlogSearchFilterScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Kết quả: ${items.length} bài viết',
+                    'Results: ${items.length} posts',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -198,7 +198,7 @@ class _BlogSearchFilterScreenState extends State<BlogSearchFilterScreen> {
                       color: Colors.blueAccent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: Text('$selectedFilterCount bộ lọc'),
+                    child: Text('$selectedFilterCount filters'),
                   ),
               ],
             ),
@@ -210,7 +210,7 @@ class _BlogSearchFilterScreenState extends State<BlogSearchFilterScreen> {
                 alignment: Alignment.centerLeft,
                 child: Chip(
                   avatar: const Icon(Icons.search, size: 16),
-                  label: Text('Từ khóa: "$_keyword"'),
+                  label: Text('Keyword: "$_keyword"'),
                 ),
               ),
             ),
@@ -252,7 +252,7 @@ class _BlogSearchFilterScreenState extends State<BlogSearchFilterScreen> {
                 : _errorMessage != null
                     ? Center(child: Text(_errorMessage!))
                     : items.isEmpty
-                        ? const Center(child: Text('Không có bài viết phù hợp'))
+                        ? const Center(child: Text('No matching posts'))
                         : ListView.separated(
                             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                             itemBuilder: (context, index) {
@@ -309,7 +309,7 @@ class _BlogSearchFilterScreenState extends State<BlogSearchFilterScreen> {
                                                   children: [
                                                     Expanded(
                                                       child: Text(
-                                                        '$published • ${post.viewCount ?? 0} lượt xem',
+                                                        '$published • ${post.viewCount ?? 0} views',
                                                         maxLines: 1,
                                                         overflow: TextOverflow.ellipsis,
                                                         style: Theme.of(context).textTheme.bodySmall,

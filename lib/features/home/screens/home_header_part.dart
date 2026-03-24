@@ -54,12 +54,12 @@ class _TopHeader extends StatelessWidget {
                     onSubmitted: (_) => onSearchTap(),
                     textInputAction: TextInputAction.search,
                     decoration: InputDecoration(
-                      hintText: 'Tìm kiếm sách...',
+                      hintText: 'Search books...',
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.open_in_new),
                         onPressed: onSearchTap,
-                        tooltip: 'Mở trang bộ lọc',
+                        tooltip: 'Open filter page',
                       ),
                       isDense: true,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -89,8 +89,8 @@ class _TopHeader extends StatelessWidget {
                 PopupMenuButton<String>(
                   onSelected: onProfileMenuTap,
                   itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'profile', child: Text('Trang cá nhân')),
-                    PopupMenuItem(value: 'logout', child: Text('Đăng xuất')),
+                    PopupMenuItem(value: 'profile', child: Text('Profile')),
+                    PopupMenuItem(value: 'logout', child: Text('Log out')),
                   ],
                   child: Row(
                     children: [
@@ -124,7 +124,7 @@ class _DesktopTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const tabs = ['Trang chủ', 'Blog', 'Giỏ hàng', 'Cá nhân'];
+    const tabs = ['Home', 'Blog', 'Cart', 'Account'];
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),

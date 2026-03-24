@@ -12,7 +12,7 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
         const Spacer(),
-        TextButton(onPressed: onViewAll, child: const Text('Xem tất cả')),
+        TextButton(onPressed: onViewAll, child: const Text('View all')),
       ],
     );
   }
@@ -124,7 +124,7 @@ class _BookHorizontal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (books.isEmpty) {
-      return const Text('Chưa có dữ liệu');
+      return const Text('No data yet');
     }
 
     return SizedBox(
@@ -196,7 +196,7 @@ class _BlogList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (posts.isEmpty) {
-      return const Text('Chưa có bài viết');
+      return const Text('No posts yet');
     }
 
     return Column(
@@ -241,7 +241,7 @@ class _FeaturedBlogCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (posts.isEmpty) return const Text('Chưa có bài viết nổi bật');
+    if (posts.isEmpty) return const Text('No featured posts');
 
     return SizedBox(
       height: 196,
@@ -345,7 +345,7 @@ class BookCard extends StatelessWidget {
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      tooltip: 'Thêm vào giỏ',
+                      tooltip: 'Add to cart',
                       onPressed: onAddToCart,
                       icon: const Icon(Icons.add_shopping_cart_outlined, size: 18),
                     ),
@@ -353,7 +353,7 @@ class BookCard extends StatelessWidget {
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      tooltip: 'Yêu thích',
+                      tooltip: 'Favorite',
                       icon: Icon(favorited ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent, size: 18),
                       onPressed: onToggleFavorite,
                     ),
@@ -398,12 +398,12 @@ class BookCard extends StatelessWidget {
             IconButton(
               onPressed: onAddToCart,
               icon: const Icon(Icons.add_shopping_cart_outlined, size: 18),
-              tooltip: 'Thêm vào giỏ',
+              tooltip: 'Add to cart',
             ),
             IconButton(
               onPressed: onToggleFavorite,
               icon: Icon(favorited ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent, size: 18),
-              tooltip: 'Yêu thích',
+              tooltip: 'Favorite',
             ),
           ],
         ),

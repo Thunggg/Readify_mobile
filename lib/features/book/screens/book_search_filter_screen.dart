@@ -37,10 +37,10 @@ class BookSearchFilterScreen extends StatefulWidget {
 
 class _BookSearchFilterScreenState extends State<BookSearchFilterScreen> {
   static const _sortOptions = <Map<String, String>>[
-    {'value': 'newest', 'label': 'Mới nhất'},
-    {'value': 'price_asc', 'label': 'Giá tăng dần'},
-    {'value': 'price_desc', 'label': 'Giá giảm dần'},
-    {'value': 'rating_desc', 'label': 'Đánh giá cao'},
+    {'value': 'newest', 'label': 'Newest'},
+    {'value': 'price_asc', 'label': 'Price: Low to high'},
+    {'value': 'price_desc', 'label': 'Price: High to low'},
+    {'value': 'rating_desc', 'label': 'Top rated'},
   ];
 
   final HomeService _bookService = HomeService();
@@ -74,16 +74,16 @@ class _BookSearchFilterScreenState extends State<BookSearchFilterScreen> {
 
   String get _sortLabel {
     final found = _sortOptions.where((e) => e['value'] == _filterState.sort);
-    if (found.isEmpty) return 'Mới nhất';
+    if (found.isEmpty) return 'Newest';
     return found.first['label']!;
   }
 
   List<HomeCategory> get _effectiveCategories {
     if (widget.categories.isNotEmpty) return widget.categories;
     return const [
-      HomeCategory(id: 'novel', name: 'Tiểu thuyết'),
-      HomeCategory(id: 'science', name: 'Khoa học'),
-      HomeCategory(id: 'economy', name: 'Kinh tế'),
+      HomeCategory(id: 'novel', name: 'Novel'),
+      HomeCategory(id: 'science', name: 'Science'),
+      HomeCategory(id: 'economy', name: 'Economy'),
     ];
   }
 
@@ -105,8 +105,8 @@ class _BookSearchFilterScreenState extends State<BookSearchFilterScreen> {
   Future<void> _restoreStateAndLoad() async {
     final storedState = await _storageService.readState();
     
-    // Nếu được điều hướng đến mà KHÔNG truyền initialKeyword (null), thì phục hồi lại nguyên trạng thái (bao gồm cả keyword cũ)
-    // Nếu CÓ truyền initialKeyword (kể cả chuỗi rỗng khi người dùng xoá ô search ngoài home), thì GHI ĐÈ keyword.
+    // If navigated here WITHOUT an initialKeyword, restore previous state (including prior keyword).
+    // If an initialKeyword IS provided (even empty after clearing), override keyword with it.
     if (widget.initialKeyword == null) {
       _filterState = storedState;
     } else {
@@ -301,13 +301,13 @@ class _BookSearchFilterScreenState extends State<BookSearchFilterScreen> {
   Widget build(BuildContext context) {
     if (_initializing) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Sách')),
+        appBar: AppBar(title: const Text('Books')),
         body: _buildSkeleton(),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sách')),
+      appBar: AppBar(title: const Text('Books')),
       body: Column(
         children: [
           Padding(
@@ -318,7 +318,7 @@ class _BookSearchFilterScreenState extends State<BookSearchFilterScreen> {
                   controller: _searchController,
                   onChanged: _onSearchChanged,
                   decoration: InputDecoration(
-                    hintText: 'Tìm theo tiêu đề hoặc tác giả...',
+                    hintText: 'Search by title or author...',
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     isDense: true,
@@ -381,7 +381,7 @@ class _BookSearchFilterScreenState extends State<BookSearchFilterScreen> {
                         ),
                     ],
                   ),
-                  label: Text('Bộ lọc${_activeFilterCount > 0 ? ' ($_activeFilterCount)' : ''}'),
+                  label: Text('Filters${_activeFilterCount > 0 ? ' ($_activeFilterCount)' : ''}'),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
@@ -414,7 +414,7 @@ class _BookSearchFilterScreenState extends State<BookSearchFilterScreen> {
               const SizedBox(height: 10),
               Text(_errorMessage!, textAlign: TextAlign.center),
               const SizedBox(height: 10),
-              FilledButton(onPressed: () => _loadBooks(reset: true), child: const Text('Thử lại')),
+              FilledButton(onPressed: () => _loadBooks(reset: true), child: const Text('Retry')),
             ],
           ),
         ),
@@ -428,13 +428,13 @@ class _BookSearchFilterScreenState extends State<BookSearchFilterScreen> {
           const SizedBox(height: 60),
           const Icon(Icons.search_off_rounded, size: 56),
           const SizedBox(height: 12),
-          const Text('Không tìm thấy sách', textAlign: TextAlign.center),
+          const Text('No books found', textAlign: TextAlign.center),
           const SizedBox(height: 12),
           Center(
-            child: OutlinedButton(
-              onPressed: _resetFilters,
-              child: const Text('Đặt lại bộ lọc'),
-            ),
+              child: OutlinedButton(
+                onPressed: _resetFilters,
+                child: const Text('Reset filters'),
+              ),
           ),
         ],
       );
@@ -465,7 +465,7 @@ class _BookSearchFilterScreenState extends State<BookSearchFilterScreen> {
             onToggleFavorite: () => widget.onToggleFavoriteBook(book),
             onAddToCart: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Đã thêm "${book.title}" vào giỏ')),
+                SnackBar(content: Text('Added "${book.title}" to cart')),
               );
             },
           );
@@ -494,7 +494,7 @@ class _BookSearchFilterScreenState extends State<BookSearchFilterScreen> {
           onToggleFavorite: () => widget.onToggleFavoriteBook(book),
           onAddToCart: () {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Đã thêm "${book.title}" vào giỏ')),
+              SnackBar(content: Text('Added "${book.title}" to cart')),
             );
           },
         );

@@ -184,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       _HomeTab(
                         provider: _provider,
                         currency: _currency,
-                        onOpenBooksTab: () {},
+                        onOpenBooksTab: () => _openBookSearchFilterPage(),
                         onOpenBlogsTab: () => setState(() => _tabIndex = 1),
                         onOpenBookDetail: (book) {
                           Navigator.of(context).push(
@@ -211,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onToggleFavoriteBlog: _provider.toggleFavoriteBlog,
                         isBlogFavorited: _provider.isBlogFavorited,
                       ),
-                      const Center(child: Text('Giỏ hàng trống')), // Temporary Cart tab
+                      const Center(child: Text('Cart is empty')), // Temporary Cart tab
                       _ProfileTab(provider: _provider),
                     ],
                   ),
@@ -226,10 +226,10 @@ class _HomeScreenState extends State<HomeScreen> {
               selectedIndex: _tabIndex,
               onDestinationSelected: (value) => setState(() => _tabIndex = value),
               destinations: const [
-                NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Trang chủ'),
+                NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
                 NavigationDestination(icon: Icon(Icons.article_outlined), selectedIcon: Icon(Icons.article), label: 'Blog'),
-                NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), selectedIcon: Icon(Icons.shopping_cart), label: 'Giỏ hàng'),
-                NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Cá nhân'),
+                NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), selectedIcon: Icon(Icons.shopping_cart), label: 'Cart'),
+                NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Account'),
               ],
             )
           : null,

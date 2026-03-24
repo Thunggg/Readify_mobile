@@ -42,7 +42,7 @@ class _HomeTab extends StatelessWidget {
             onTapBlog: onOpenBlogDetail,
           ),
           const SizedBox(height: 16),
-          _SectionHeader(title: 'Sách nổi bật', onViewAll: onOpenBooksTab),
+          _SectionHeader(title: 'Featured Books', onViewAll: onOpenBooksTab),
           const SizedBox(height: 8),
           _BookHorizontal(
             books: provider.featuredBooks,
@@ -52,7 +52,7 @@ class _HomeTab extends StatelessWidget {
             isBookFavorited: isBookFavorited,
           ),
           const SizedBox(height: 16),
-          _SectionHeader(title: 'Sách mới nhất', onViewAll: onOpenBooksTab),
+          _SectionHeader(title: 'Newest Books', onViewAll: onOpenBooksTab),
           const SizedBox(height: 8),
           _BookHorizontal(
             books: provider.newestBooks,
@@ -62,7 +62,7 @@ class _HomeTab extends StatelessWidget {
             isBookFavorited: isBookFavorited,
           ),
           const SizedBox(height: 16),
-          _SectionHeader(title: 'Bài viết mới nhất', onViewAll: onOpenBlogsTab),
+          _SectionHeader(title: 'Latest Posts', onViewAll: onOpenBlogsTab),
           const SizedBox(height: 8),
           _BlogList(
             posts: provider.newestBlogs.take(6).toList(growable: false),
@@ -71,7 +71,7 @@ class _HomeTab extends StatelessWidget {
             isBlogFavorited: isBlogFavorited,
           ),
           const SizedBox(height: 16),
-          _SectionHeader(title: 'Bài viết nổi bật', onViewAll: onOpenBlogsTab),
+          _SectionHeader(title: 'Featured Posts', onViewAll: onOpenBlogsTab),
           const SizedBox(height: 8),
           _FeaturedBlogCards(
             posts: provider.featuredBlogs.take(4).toList(growable: false),
@@ -80,7 +80,7 @@ class _HomeTab extends StatelessWidget {
             isBlogFavorited: isBlogFavorited,
           ),
           const SizedBox(height: 16),
-          Text('Danh mục / Tag phổ biến', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          Text('Popular categories / tags', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -156,12 +156,12 @@ class _BooksTabState extends State<_BooksTab> {
             textInputAction: TextInputAction.search,
             onSubmitted: (val) => _openBookSearchPage(val),
             decoration: InputDecoration(
-              hintText: 'Tìm kiếm theo tiêu đề/tác giả',
+              hintText: 'Search by title/author',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.open_in_new),
                 onPressed: () => _openBookSearchPage(_searchController.text),
-                tooltip: 'Mở trang lọc sách',
+                tooltip: 'Open book filter',
               ),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -172,7 +172,7 @@ class _BooksTabState extends State<_BooksTab> {
             child: FilledButton.icon(
               onPressed: () => _openBookSearchPage(),
               icon: const Icon(Icons.menu_book_outlined),
-              label: const Text('Mở trang Sách (Search / Sort / Filter)'),
+              label: const Text('Open Books page (Search / Sort / Filter)'),
             ),
           ),
           
@@ -203,7 +203,7 @@ class _BlogsTab extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
     return posts.isEmpty
-        ? const Center(child: Text('Chưa có bài viết'))
+        ? const Center(child: Text('No posts yet'))
         : ListView.separated(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
             itemBuilder: (context, index) {
@@ -264,7 +264,7 @@ class _BlogsTab extends StatelessWidget {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        '$published • ${post.viewCount ?? 0} lượt xem',
+                                        '$published • ${post.viewCount ?? 0} views',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: Theme.of(context).textTheme.bodySmall,
@@ -319,12 +319,12 @@ class _FavoritesTab extends StatelessWidget {
       length: 2,
       child: Column(
         children: [
-          const TabBar(tabs: [Tab(text: 'Sách đã lưu'), Tab(text: 'Bài viết đã like/lưu')]),
+          const TabBar(tabs: [Tab(text: 'Saved books'), Tab(text: 'Liked/Saved posts')]),
           Expanded(
             child: TabBarView(
               children: [
                 provider.favoriteBooks.isEmpty
-                    ? const Center(child: Text('Chưa có sách yêu thích'))
+                    ? const Center(child: Text('No favorite books'))
                     : ListView.separated(
                         padding: const EdgeInsets.all(12),
                         itemBuilder: (context, index) {
@@ -344,7 +344,7 @@ class _FavoritesTab extends StatelessWidget {
                         itemCount: provider.favoriteBooks.length,
                       ),
                 provider.favoriteBlogs.isEmpty
-                    ? const Center(child: Text('Chưa có bài viết yêu thích'))
+                    ? const Center(child: Text('No favorite posts'))
                     : ListView.separated(
                         padding: const EdgeInsets.all(12),
                         itemBuilder: (context, index) {
@@ -505,9 +505,9 @@ class _ProfileTabState extends State<_ProfileTab> with AutomaticKeepAliveClientM
             spacing: 10,
             runSpacing: 10,
             children: [
-              _CountChip(label: 'Sách đã lưu', value: provider.favoriteBooks.length),
-              _CountChip(label: 'Bài viết đã like', value: provider.favoriteBlogs.length),
-              _CountChip(label: 'Bình luận', value: provider.myCommentCount),
+              _CountChip(label: 'Saved books', value: provider.favoriteBooks.length),
+              _CountChip(label: 'Liked posts', value: provider.favoriteBlogs.length),
+              _CountChip(label: 'Comments', value: provider.myCommentCount),
             ],
           ),
           if (_isGuest) ...[
@@ -517,22 +517,22 @@ class _ProfileTabState extends State<_ProfileTab> with AutomaticKeepAliveClientM
               child: FilledButton.icon(
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen())),
                 icon: const Icon(Icons.login),
-                label: const Text('Đăng nhập để xem hồ sơ'),
+                label: const Text('Log in to view profile'),
               ),
             ),
           ],
           const SizedBox(height: 18),
           _ProfileMenuTile(
-            title: 'Thông tin cá nhân',
+            title: 'Profile',
             icon: Icons.badge_outlined,
             onTap: _openProfile,
           ),
-          const _ProfileMenuTile(title: 'Sách yêu thích', icon: Icons.menu_book_outlined),
-          const _ProfileMenuTile(title: 'Bài viết đã lưu', icon: Icons.bookmark_outline),
-          const _ProfileMenuTile(title: 'Bình luận của tôi', icon: Icons.chat_bubble_outline),
-          const _ProfileMenuTile(title: 'Cài đặt', icon: Icons.settings_outlined),
+          const _ProfileMenuTile(title: 'Favorite books', icon: Icons.menu_book_outlined),
+          const _ProfileMenuTile(title: 'Saved posts', icon: Icons.bookmark_outline),
+          const _ProfileMenuTile(title: 'My comments', icon: Icons.chat_bubble_outline),
+          const _ProfileMenuTile(title: 'Settings', icon: Icons.settings_outlined),
           _ProfileMenuTile(
-            title: _isGuest ? 'Đăng nhập' : 'Đăng xuất',
+            title: _isGuest ? 'Log in' : 'Log out',
             icon: _isGuest ? Icons.login : Icons.logout,
             onTap: _isGuest ? () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen())) : _logout,
           ),
