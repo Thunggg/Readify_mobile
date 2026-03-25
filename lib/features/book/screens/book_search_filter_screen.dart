@@ -104,10 +104,15 @@ class _BookSearchFilterScreenState extends State<BookSearchFilterScreen> {
 
   Future<void> _restoreStateAndLoad() async {
     final storedState = await _storageService.readState();
-    final normalizedInitialKeyword = widget.initialKeyword?.trim() ?? '';
-    _filterState = normalizedInitialKeyword.isEmpty
-        ? storedState
-        : storedState.copyWith(keyword: normalizedInitialKeyword);
+    
+    // Nếu được điều hướng đến mà KHÔNG truyền initialKeyword (null), thì phục hồi lại nguyên trạng thái (bao gồm cả keyword cũ)
+    // Nếu CÓ truyền initialKeyword (kể cả chuỗi rỗng khi người dùng xoá ô search ngoài home), thì GHI ĐÈ keyword.
+    if (widget.initialKeyword == null) {
+      _filterState = storedState;
+    } else {
+      _filterState = storedState.copyWith(keyword: widget.initialKeyword!.trim());
+    }
+    
     _searchController.text = _filterState.keyword;
 
     if (!mounted) return;

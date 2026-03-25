@@ -42,4 +42,14 @@ class BookFilterStorageService {
     await prefs.setStringList(_prefsCategoryIdsKey, state.categoryIds.toList(growable: false));
     await prefs.setStringList(_prefsRecentSearchesKey, state.recentSearches);
   }
+
+  Future<void> clearState() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefsSortKey);
+    await prefs.remove(_prefsKeywordKey);
+    await prefs.remove(_prefsMinPriceKey);
+    await prefs.remove(_prefsMaxPriceKey);
+    await prefs.remove(_prefsCategoryIdsKey);
+    await prefs.remove(_prefsRecentSearchesKey);
+  }
 }

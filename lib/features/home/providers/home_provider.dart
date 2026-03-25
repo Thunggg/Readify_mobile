@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/home_models.dart';
+import '../../order/order_repository.dart';
 import '../services/home_service.dart';
 
 class HomeProvider extends ChangeNotifier {
@@ -29,10 +30,12 @@ class HomeProvider extends ChangeNotifier {
 
   String userName = 'Guest User';
   String? avatarUrl;
+  String userEmail = 'guest@example.com';
   int unreadNotifications = 3;
   int myCommentCount = 0;
 
   List<HomeBannerItem> banners = const [];
+  List<HomeOrder> orders = const [];
 
   Future<void> loadHome() async {
     loading = true;
@@ -71,7 +74,10 @@ class HomeProvider extends ChangeNotifier {
 
       final sortedTags = tagCount.entries.toList()
         ..sort((a, b) => b.value.compareTo(a.value));
-      popularTags = sortedTags.take(10).map((e) => e.key).toList(growable: false);
+      popularTags = sortedTags
+          .take(10)
+          .map((e) => e.key)
+          .toList(growable: false);
 
       banners = _buildBanners();
       myCommentCount = (allBlogs.length / 2).ceil();
@@ -81,6 +87,39 @@ class HomeProvider extends ChangeNotifier {
       loading = false;
       notifyListeners();
     }
+  }
+
+  void updateProfile({required String name, String? email, String? avatar}) {
+    userName = name;
+    if (email != null) userEmail = email;
+    if (avatar != null) avatarUrl = avatar;
+    notifyListeners();
+  }
+
+  void fetchOrders() {
+    // In a real app this would call an API. For now read orders from the session repo.
+    final repoOrders = OrderRepository.instance.orders;
+    // Replace provider orders with repository orders (no demo/old data)
+    orders = List<HomeOrder>.from(repoOrders);
+    notifyListeners();
+  }
+
+  /// Cancel an order (only updates local/session repository and provider view).
+  /// Returns true if the order was found and updated.
+  bool cancelOrder(String id) {
+    // Only allow cancelling pending orders
+    final idx = orders.indexWhere((o) => o.id == id);
+    if (idx == -1) return false;
+    final o = orders[idx];
+    final currentStatus = o.status.toLowerCase();
+    if (currentStatus != 'pending') return false;
+
+    // Update repository and refresh provider orders
+    final updated = OrderRepository.instance.updateOrderStatus(id, 'Cancelled');
+    if (!updated) return false;
+    orders = List<HomeOrder>.from(OrderRepository.instance.orders);
+    notifyListeners();
+    return true;
   }
 
   Future<void> searchGlobal(String keyword) async {
@@ -148,7 +187,9 @@ class HomeProvider extends ChangeNotifier {
   void toggleFavoriteBook(HomeBook book) {
     final exists = favoriteBooks.any((b) => b.id == book.id);
     if (exists) {
-      favoriteBooks = favoriteBooks.where((b) => b.id != book.id).toList(growable: false);
+      favoriteBooks = favoriteBooks
+          .where((b) => b.id != book.id)
+          .toList(growable: false);
     } else {
       favoriteBooks = [...favoriteBooks, book];
     }
@@ -158,7 +199,9 @@ class HomeProvider extends ChangeNotifier {
   void toggleFavoriteBlog(HomeBlogPost blog) {
     final exists = favoriteBlogs.any((b) => b.id == blog.id);
     if (exists) {
-      favoriteBlogs = favoriteBlogs.where((b) => b.id != blog.id).toList(growable: false);
+      favoriteBlogs = favoriteBlogs
+          .where((b) => b.id != blog.id)
+          .toList(growable: false);
     } else {
       favoriteBlogs = [...favoriteBlogs, blog];
     }
@@ -166,12 +209,16 @@ class HomeProvider extends ChangeNotifier {
   }
 
   void removeFavoriteBook(String id) {
-    favoriteBooks = favoriteBooks.where((b) => b.id != id).toList(growable: false);
+    favoriteBooks = favoriteBooks
+        .where((b) => b.id != id)
+        .toList(growable: false);
     notifyListeners();
   }
 
   void removeFavoriteBlog(String id) {
-    favoriteBlogs = favoriteBlogs.where((b) => b.id != id).toList(growable: false);
+    favoriteBlogs = favoriteBlogs
+        .where((b) => b.id != id)
+        .toList(growable: false);
     notifyListeners();
   }
 
