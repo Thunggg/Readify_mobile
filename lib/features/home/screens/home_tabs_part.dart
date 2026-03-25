@@ -240,7 +240,8 @@ class _ProfileTab extends StatefulWidget {
   State<_ProfileTab> createState() => _ProfileTabState();
 }
 
-class _ProfileTabState extends State<_ProfileTab> with AutomaticKeepAliveClientMixin {
+class _ProfileTabState extends State<_ProfileTab>
+    with AutomaticKeepAliveClientMixin {
   final ProfileApi _profileApi = ProfileApi();
   Map<String, dynamic>? _me;
   bool _loading = false;
@@ -277,7 +278,8 @@ class _ProfileTabState extends State<_ProfileTab> with AutomaticKeepAliveClientM
       final message = prettyDioError(e);
       setState(() {
         _me = null;
-        _isGuest = message.toLowerCase().contains('unauthorized') || message.contains('(401)');
+        _isGuest = message.toLowerCase().contains('unauthorized') ||
+            message.contains('(401)');
       });
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -305,296 +307,6 @@ class _ProfileTabState extends State<_ProfileTab> with AutomaticKeepAliveClientM
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 32,
-                  backgroundImage: provider.avatarUrl != null
-                      ? NetworkImage(provider.avatarUrl!)
-                      : null,
-                  child: provider.avatarUrl == null
-                      ? const Icon(Icons.person, size: 28)
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        provider.userName,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        provider.userEmail,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          FilledButton(
-                            onPressed: () async {
-                              final nameCtrl = TextEditingController(
-                                text: provider.userName,
-                              );
-                              final emailCtrl = TextEditingController(
-                                text: provider.userEmail,
-                              );
-                              final avatarCtrl = TextEditingController(
-                                text: provider.avatarUrl ?? '',
-                              );
-                              final saved = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Chỉnh sửa thông tin'),
-                                  content: SingleChildScrollView(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        TextField(
-                                          controller: nameCtrl,
-                                          decoration: const InputDecoration(
-                                            labelText: 'Tên',
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        TextField(
-                                          controller: emailCtrl,
-                                          decoration: const InputDecoration(
-                                            labelText: 'Email',
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        TextField(
-                                          controller: avatarCtrl,
-                                          decoration: const InputDecoration(
-                                            labelText: 'URL avatar (tuỳ chọn)',
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(false),
-                                      child: const Text('Huỷ'),
-                                    ),
-                                    FilledButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(true),
-                                      child: const Text('Lưu'),
-                                    ),
-                                  ],
-                                ),
-                              );
-
-                              if (saved == true) {
-                                provider.updateProfile(
-                                  name: nameCtrl.text.trim().isEmpty
-                                      ? provider.userName
-                                      : nameCtrl.text.trim(),
-                                  email: emailCtrl.text.trim(),
-                                  avatar: avatarCtrl.text.trim().isEmpty
-                                      ? null
-                                      : avatarCtrl.text.trim(),
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Cập nhật thông tin thành công',
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            child: const Text('Chỉnh sửa'),
-                          ),
-                          const SizedBox(width: 8),
-                          OutlinedButton(
-                            onPressed: () {
-                              provider.fetchOrders();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      OrderScreen(provider: provider),
-                                ),
-                              );
-                            },
-                            child: const Text('Xem đơn hàng'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            _CountChip(
-              label: 'Sách đã lưu',
-              value: provider.favoriteBooks.length,
-            ),
-            _CountChip(
-              label: 'Bài viết đã like',
-              value: provider.favoriteBlogs.length,
-            ),
-            _CountChip(label: 'Bình luận', value: provider.myCommentCount),
-          ],
-        ),
-        const SizedBox(height: 18),
-
-        // const SizedBox(height: 6),
-        // const Text(
-        //   'Đơn hàng của tôi',
-        //   style: TextStyle(fontWeight: FontWeight.w700),
-        // ),
-        // const SizedBox(height: 8),
-        // if (provider.orders.isEmpty)
-        //   const Text(
-        //     'Bạn chưa có đơn hàng nào. Nhấn "Tải đơn hàng" để xem demo.',
-        //   ),
-        // if (provider.orders.isNotEmpty)
-        //   ...provider.orders.map(
-        //     (o) => Card(
-        //       margin: const EdgeInsets.symmetric(vertical: 6),
-        //       child: ListTile(
-        //         title: Text('Đơn ${o.id} • ${o.status}'),
-        //         subtitle: Text('${o.shortDate} • ${o.items.length} mặt hàng'),
-        //         trailing: Column(
-        //           mainAxisSize: MainAxisSize.min,
-        //           crossAxisAlignment: CrossAxisAlignment.end,
-        //           children: [
-        //             Text('${o.total}đ'),
-        //             const SizedBox(height: 4),
-        //             TextButton(
-        //               onPressed: () {
-        //                 showModalBottomSheet(
-        //                   context: context,
-        //                   builder: (_) => Padding(
-        //                     padding: const EdgeInsets.all(12),
-        //                     child: Column(
-        //                       mainAxisSize: MainAxisSize.min,
-        //                       crossAxisAlignment: CrossAxisAlignment.start,
-        //                       children: [
-        //                         Text(
-        //                           'Chi tiết đơn ${o.id}',
-        //                           style: Theme.of(context).textTheme.titleMedium
-        //                               ?.copyWith(fontWeight: FontWeight.w700),
-        //                         ),
-        //                         const SizedBox(height: 8),
-        //                         ...o.items.map(
-        //                           (it) => Padding(
-        //                             padding: const EdgeInsets.symmetric(
-        //                               vertical: 4,
-        //                             ),
-        //                             child: Row(
-        //                               mainAxisAlignment:
-        //                                   MainAxisAlignment.spaceBetween,
-        //                               children: [
-        //                                 Text(it.title),
-        //                                 Text('${it.quantity} x ${it.price}đ'),
-        //                               ],
-        //                             ),
-        //                           ),
-        //                         ),
-        //                         const SizedBox(height: 8),
-        //                         Text(
-        //                           'Tổng: ${o.total}đ',
-        //                           style: const TextStyle(
-        //                             fontWeight: FontWeight.w700,
-        //                           ),
-        //                         ),
-        //                       ],
-        //                     ),
-        //                   ),
-        //                 );
-        //               },
-        //               child: const Text('Chi tiết'),
-        //               style: TextButton.styleFrom(
-        //                 padding: EdgeInsets.zero,
-        //                 minimumSize: const Size(40, 24),
-        //                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        //               ),
-        //             ),
-        //           ],
-        //         ),
-        //         onTap: () {
-        //           showModalBottomSheet(
-        //             context: context,
-        //             builder: (_) => Padding(
-        //               padding: const EdgeInsets.all(12),
-        //               child: Column(
-        //                 mainAxisSize: MainAxisSize.min,
-        //                 crossAxisAlignment: CrossAxisAlignment.start,
-        //                 children: [
-        //                   Text(
-        //                     'Chi tiết đơn ${o.id}',
-        //                     style: Theme.of(context).textTheme.titleMedium
-        //                         ?.copyWith(fontWeight: FontWeight.w700),
-        //                   ),
-        //                   const SizedBox(height: 8),
-        //                   ...o.items.map(
-        //                     (it) => Padding(
-        //                       padding: const EdgeInsets.symmetric(vertical: 4),
-        //                       child: Row(
-        //                         mainAxisAlignment:
-        //                             MainAxisAlignment.spaceBetween,
-        //                         children: [
-        //                           Text(it.title),
-        //                           Text('${it.quantity} x ${it.price}đ'),
-        //                         ],
-        //                       ),
-        //                     ),
-        //                   ),
-        //                   const SizedBox(height: 8),
-        //                   Text(
-        //                     'Tổng: ${o.total}đ',
-        //                     style: const TextStyle(fontWeight: FontWeight.w700),
-        //                   ),
-        //                 ],
-        //               ),
-        //             ),
-        //           );
-        //         },
-        //       ),
-        //     ),
-        // ),
-        const SizedBox(height: 12),
-        const _ProfileMenuTile(
-          title: 'Sách yêu thích',
-          icon: Icons.menu_book_outlined,
-        ),
-        const _ProfileMenuTile(
-          title: 'Bài viết đã lưu',
-          icon: Icons.bookmark_outline,
-        ),
-        const _ProfileMenuTile(
-          title: 'Bình luận của tôi',
-          icon: Icons.chat_bubble_outline,
-        ),
-        const _ProfileMenuTile(title: 'Cài đặt', icon: Icons.settings_outlined),
-        const _ProfileMenuTile(title: 'Đăng xuất', icon: Icons.logout),
-      ],
     super.build(context);
 
     final provider = widget.provider;
@@ -602,7 +314,8 @@ class _ProfileTabState extends State<_ProfileTab> with AutomaticKeepAliveClientM
     final avatarUrl = (me?['avatarUrl'] ?? '').toString().trim();
     final hasAvatar = avatarUrl.isNotEmpty;
     final title = me == null ? 'Guest User' : _fullName(me);
-    final subtitle = me == null ? 'Member' : (me['email'] ?? 'Member').toString();
+    final subtitle =
+        me == null ? 'Member' : (me['email'] ?? 'Member').toString();
 
     return RefreshIndicator(
       onRefresh: _loadMe,
@@ -627,20 +340,29 @@ class _ProfileTabState extends State<_ProfileTab> with AutomaticKeepAliveClientM
                         Expanded(
                           child: Text(
                             title,
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w700),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (_loading) ...[
                           const SizedBox(width: 10),
-                          const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                          const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                         ],
                       ],
                     ),
                     Text(
                       subtitle,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.70)),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.70),
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -654,8 +376,14 @@ class _ProfileTabState extends State<_ProfileTab> with AutomaticKeepAliveClientM
             spacing: 10,
             runSpacing: 10,
             children: [
-              _CountChip(label: 'Sách đã lưu', value: provider.favoriteBooks.length),
-              _CountChip(label: 'Bài viết đã like', value: provider.favoriteBlogs.length),
+              _CountChip(
+                label: 'Sách đã lưu',
+                value: provider.favoriteBooks.length,
+              ),
+              _CountChip(
+                label: 'Bài viết đã like',
+                value: provider.favoriteBlogs.length,
+              ),
               _CountChip(label: 'Bình luận', value: provider.myCommentCount),
             ],
           ),
@@ -664,7 +392,9 @@ class _ProfileTabState extends State<_ProfileTab> with AutomaticKeepAliveClientM
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen())),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                ),
                 icon: const Icon(Icons.login),
                 label: const Text('Đăng nhập để xem hồ sơ'),
               ),
@@ -676,14 +406,30 @@ class _ProfileTabState extends State<_ProfileTab> with AutomaticKeepAliveClientM
             icon: Icons.badge_outlined,
             onTap: _openProfile,
           ),
-          const _ProfileMenuTile(title: 'Sách yêu thích', icon: Icons.menu_book_outlined),
-          const _ProfileMenuTile(title: 'Bài viết đã lưu', icon: Icons.bookmark_outline),
-          const _ProfileMenuTile(title: 'Bình luận của tôi', icon: Icons.chat_bubble_outline),
-          const _ProfileMenuTile(title: 'Cài đặt', icon: Icons.settings_outlined),
+          const _ProfileMenuTile(
+            title: 'Sách yêu thích',
+            icon: Icons.menu_book_outlined,
+          ),
+          const _ProfileMenuTile(
+            title: 'Bài viết đã lưu',
+            icon: Icons.bookmark_outline,
+          ),
+          const _ProfileMenuTile(
+            title: 'Bình luận của tôi',
+            icon: Icons.chat_bubble_outline,
+          ),
+          const _ProfileMenuTile(
+            title: 'Cài đặt',
+            icon: Icons.settings_outlined,
+          ),
           _ProfileMenuTile(
             title: _isGuest ? 'Đăng nhập' : 'Đăng xuất',
             icon: _isGuest ? Icons.login : Icons.logout,
-            onTap: _isGuest ? () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen())) : _logout,
+            onTap: _isGuest
+                ? () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    )
+                : _logout,
           ),
         ],
       ),
