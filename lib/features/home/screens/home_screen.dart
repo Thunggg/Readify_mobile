@@ -17,6 +17,16 @@ import '../../cart/cart_screen.dart';
 import '../../cart/cart_service.dart';
 import '../../order/order_screen.dart';
 
+import 'package:mobile/features/notification/providers/notification_provider.dart';
+import 'package:mobile/features/notification/screens/notification_list_screen.dart';
+import 'package:mobile/features/notification/widgets/notification_preview_dropdown.dart';
+
+import 'package:mobile/features/review/models/review_model.dart';
+import 'package:mobile/features/review/providers/review_provider.dart';
+import 'package:mobile/features/review/widgets/review_item_widget.dart';
+import 'package:mobile/features/review/widgets/add_edit_review_dialog.dart';
+import 'package:mobile/features/review/widgets/star_rating_widgets.dart';
+
 part 'home_header_part.dart';
 part 'home_tabs_part.dart';
 part 'home_sections_part.dart';
@@ -32,21 +42,20 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final HomeProvider _provider = HomeProvider();
-  final NumberFormat _currency = NumberFormat.currency(
-    locale: 'vi_VN',
-    symbol: 'đ',
-    decimalDigits: 0,
-  );
+  final NotificationProvider _notificationProvider = NotificationProvider();
+  final NumberFormat _currency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
 
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
 
   int _tabIndex = 0;
+  OverlayEntry? _notificationOverlay;
 
   @override
   void initState() {
     super.initState();
     _provider.loadHome();
+    _notificationProvider.load(limit: 5);
   }
 
   @override
@@ -54,7 +63,61 @@ class _HomeScreenState extends State<HomeScreen> {
     _debounce?.cancel();
     _searchController.dispose();
     _provider.dispose();
+    _notificationProvider.dispose();
+    _hideNotificationPreview();
     super.dispose();
+  }
+
+  void _showNotificationPreview() {
+    if (_notificationOverlay != null) return;
+
+    final renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+
+    _notificationOverlay = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          GestureDetector(
+            onTap: _hideNotificationPreview,
+            child: Container(color: Colors.transparent),
+          ),
+          Positioned(
+            top: 60, // Approx header height
+            right: 12,
+            child: NotificationPreviewOverlay(
+              notifications: _notificationProvider.notifications,
+              onViewAll: () {
+                _hideNotificationPreview();
+                _openNotificationList();
+              },
+              onNotificationTap: (n) {
+                _hideNotificationPreview();
+                _notificationProvider.markAsRead(n.id);
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => NotificationDetailScreen(notificationId: n.id)),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+
+    Overlay.of(context).insert(_notificationOverlay!);
+  }
+
+  void _hideNotificationPreview() {
+    _notificationOverlay?.remove();
+    _notificationOverlay = null;
+  }
+
+  void _openNotificationList() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const NotificationListScreen()),
+    ).then((_) {
+       // Refresh unread count if needed
+       _notificationProvider.load(limit: 5);
+    });
   }
 
   void _onSearchChanged(String value) {
@@ -163,14 +226,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: AnimatedBuilder(
-          animation: _provider,
+        child: ListenableBuilder(
+          listenable: Listenable.merge([_provider, _notificationProvider]),
           builder: (context, child) {
             return Column(
               children: [
                 _TopHeader(
                   userName: _provider.userName,
-                  unreadNotifications: _provider.unreadNotifications,
+                  unreadNotifications: _notificationProvider.unreadCount,
                   searchController: _searchController,
                   searching: _provider.searching,
                   suggestions: _provider.searchSuggestions,
@@ -178,6 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onSearchTap: _onHeaderSearchTap,
                   onSearchChanged: _onSearchChanged,
                   onSelectSuggestion: _handleSearchTap,
+                  onNotificationTap: _showNotificationPreview,
                   onProfileMenuTap: (value) {
                     if (value == 'profile') {
                       setState(() => _tabIndex = 2);

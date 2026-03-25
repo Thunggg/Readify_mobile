@@ -12,14 +12,13 @@ class BookDetailScreen extends StatefulWidget {
 
 class _BookDetailScreenState extends State<BookDetailScreen> {
   final HomeService _service = HomeService();
-  final NumberFormat _currency = NumberFormat.currency(
-    locale: 'vi_VN',
-    symbol: 'đ',
-    decimalDigits: 0,
-  );
+  final ReviewProvider _reviewProvider = ReviewProvider();
+  final ProfileApi _profileApi = ProfileApi();
+  final NumberFormat _currency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
 
   HomeBook? _book;
   List<HomeBook> _relatedBooks = const [];
+  String? _myUserId;
   bool _loading = true;
   bool _loadingRelated = true;
   int _quantity = 1;
@@ -40,6 +39,14 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     _loading = _book == null;
     _load();
     _loadRelated();
+    _loadReviews();
+    _loadProfile();
+  }
+
+  @override
+  void dispose() {
+    _reviewProvider.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -62,6 +69,88 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _loadingRelated = false);
+    }
+  }
+
+  Future<void> _loadReviews() async {
+    await _reviewProvider.loadBookReviews(widget.bookId);
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await _profileApi.getMe();
+      if (!mounted) return;
+      setState(() => _myUserId = profile['_id']?.toString() ?? profile['id']?.toString());
+    } catch (_) {}
+  }
+
+  Future<void> _addReview() async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => AddEditReviewDialog(bookId: widget.bookId),
+    );
+
+    if (result != null) {
+      try {
+        await _reviewProvider.addReview(
+          bookId: widget.bookId,
+          content: result['content'],
+          rating: result['rating'],
+        );
+        _load(); // Refresh book average rating
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+      }
+    }
+  }
+
+  Future<void> _editReview(ReviewModel review) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => AddEditReviewDialog(initialReview: review),
+    );
+
+    if (result != null) {
+      try {
+        await _reviewProvider.updateReview(
+          reviewId: review.id,
+          content: result['content'],
+          rating: result['rating'],
+        );
+        _load(); // Refresh book average rating
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+      }
+    }
+  }
+
+  Future<void> _deleteReview(String reviewId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xóa đánh giá'),
+        content: const Text('Bạn có chắc chắn muốn xóa đánh giá này?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await _reviewProvider.deleteReview(reviewId);
+        _load(); // Refresh book average rating
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+      }
     }
   }
 
@@ -117,517 +206,147 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       body: _loading && book == null
           ? const Center(child: CircularProgressIndicator())
           : book == null
-          ? const Center(child: Text('Không tìm thấy dữ liệu sách'))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Cover
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 24,
-                      horizontal: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .surfaceContainerHighest
-                          .withValues(alpha: 0.5),
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(32),
-                        bottomRight: Radius.circular(32),
-                      ),
-                    ),
-                    child: Center(
-                      child: Hero(
-                        tag: 'book_cover_${book.id}',
-                        child: Container(
-                          height: 280,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 15,
-                                offset: const Offset(0, 10),
+              ? const Center(child: Text('Không có dữ liệu'))
+              : ListenableBuilder(
+                  listenable: _reviewProvider,
+                  builder: (context, _) => ListView(
+                    padding: const EdgeInsets.all(14),
+                    children: [
+                      SizedBox(height: 260, child: _NetworkImage(url: book.thumbnailUrl)),
+                      const SizedBox(height: 12),
+                      Text(book.title, style: Theme.of(context).textTheme.headlineSmall),
+                      const SizedBox(height: 6),
+                      Text(book.authorText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _currency.format(book.basePrice),
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  color: const Color(0xFFB7F04A),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          Row(
+                            children: [
+                              StarRatingDisplay(rating: book.averageRating ?? 0, size: 20),
+                              const SizedBox(width: 6),
+                              Text(
+                                (book.averageRating ?? 0).toStringAsFixed(1),
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: _NetworkImage(url: book.thumbnailUrl),
-                          ),
-                        ),
+                        ],
                       ),
-                    ),
-                  ),
-
-                  // Title & Author
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          book.title,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                height: 1.3,
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.person_outline,
-                              size: 20,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                book.authorText,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(color: Colors.grey[400]),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-                        // Price & Rating
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              _currency.format(book.basePrice),
-                              style: Theme.of(context).textTheme.headlineMedium
-                                  ?.copyWith(
-                                    color: const Color(0xFFB7F04A),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.amber.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.star_rounded,
-                                    color: Colors.amber,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    (book.averageRating ?? 0).toStringAsFixed(
-                                      1,
-                                    ),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.amber,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        // Categories
-                        if (book.categories.isNotEmpty) ...[
-                          const SizedBox(height: 20),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: book.categories
-                                .map(
-                                  (c) => Chip(
-                                    label: Text(c.name),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                    ),
-                                    backgroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.surfaceContainer,
-                                    side: BorderSide.none,
-                                  ),
-                                )
-                                .toList(),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Mô tả',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(book.description ?? 'Chưa có mô tả', style: const TextStyle(height: 1.5, color: Colors.white70)),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Đánh giá & Nhận xét',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          TextButton.icon(
+                            onPressed: _addReview,
+                            icon: const Icon(Icons.add, size: 18),
+                            label: const Text('Viết đánh giá'),
                           ),
                         ],
-
-                        const SizedBox(height: 24),
-                        // Voucher & payment (carded)
-                        const SizedBox(height: 8),
-                        Card(
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Mã giảm giá / Voucher',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
-                                const SizedBox(height: 8),
-                                Wrap(
-                                  spacing: 8,
-                                  children: [
-                                    ..._vouchers.map(
-                                      (v) => ChoiceChip(
-                                        label: Text(v.code),
-                                        selected:
-                                            _selectedVoucher?.code == v.code,
-                                        onSelected: (_) => setState(() {
-                                          _selectedVoucher =
-                                              _selectedVoucher?.code == v.code
-                                              ? null
-                                              : v;
-                                        }),
-                                      ),
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('Không dùng'),
-                                      selected: _selectedVoucher == null,
-                                      onSelected: (_) => setState(
-                                        () => _selectedVoucher = null,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                const Text(
-                                  'Phương thức thanh toán',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
-                                RadioListTile<PaymentMethod>(
-                                  value: PaymentMethod.cod,
-                                  groupValue: _paymentMethod,
-                                  onChanged: (v) =>
-                                      setState(() => _paymentMethod = v!),
-                                  title: const Text(
-                                    'Thanh toán khi nhận hàng (COD)',
-                                  ),
-                                ),
-                                RadioListTile<PaymentMethod>(
-                                  value: PaymentMethod.vnpay,
-                                  groupValue: _paymentMethod,
-                                  onChanged: (v) =>
-                                      setState(() => _paymentMethod = v!),
-                                  title: const Text('VNPAY (Sandbox)'),
-                                  subtitle: const Text(
-                                    'Thanh toán thử nghiệm (sandbox)',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Action area: quantity selector + actions
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            // Quantity selector (card)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.surfaceVariant,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
-                                    width: 36,
-                                    height: 36,
-                                    child: IconButton(
-                                      padding: EdgeInsets.zero,
-                                      iconSize: 18,
-                                      onPressed: () {
-                                        setState(() {
-                                          if (_quantity > 1) _quantity -= 1;
-                                        });
-                                      },
-                                      icon: const Icon(Icons.remove),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '$_quantity',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleMedium,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  SizedBox(
-                                    width: 36,
-                                    height: 36,
-                                    child: IconButton(
-                                      padding: EdgeInsets.zero,
-                                      iconSize: 18,
-                                      onPressed: () =>
-                                          setState(() => _quantity += 1),
-                                      icon: Icon(
-                                        Icons.add,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  final book = _book;
-                                  if (book == null) return;
-
-                                  final existingItems = CartService
-                                      .instance
-                                      .items
-                                      .where((it) => it.book.id == book.id)
-                                      .toList();
-                                  final existingQty = existingItems.isEmpty
-                                      ? 0
-                                      : existingItems.first.quantity;
-
-                                  if (existingQty == 0) {
-                                    // Add then set desired quantity
-                                    CartService.instance.add(book);
-                                    if (_quantity > 1) {
-                                      CartService.instance.updateQuantity(
-                                        book.id,
-                                        _quantity,
-                                      );
-                                    }
-                                  } else {
-                                    CartService.instance.updateQuantity(
-                                      book.id,
-                                      existingQty + _quantity,
-                                    );
-                                  }
-
-                                  // Prepare message including voucher and payment method
-                                  final voucherText = _selectedVoucher == null
-                                      ? ''
-                                      : ' (voucher ${_selectedVoucher!.code})';
-                                  final paymentText =
-                                      _paymentMethod == PaymentMethod.cod
-                                      ? 'COD'
-                                      : 'VNPAY (sandbox)';
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Đã thêm vào giỏ hàng$voucherText - phương thức: $paymentText',
-                                      ),
-                                    ),
-                                  );
-                                  setState(() => _quantity = 1);
-                                },
-                                icon: const Icon(Icons.add_shopping_cart),
-                                label: const Text('Thêm vào giỏ'),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  final book = _book;
-                                  if (book == null) return;
-
-                                  final existingItems = CartService
-                                      .instance
-                                      .items
-                                      .where((it) => it.book.id == book.id)
-                                      .toList();
-                                  final existingQty = existingItems.isEmpty
-                                      ? 0
-                                      : existingItems.first.quantity;
-
-                                  if (existingQty == 0) {
-                                    CartService.instance.add(book);
-                                    if (_quantity > 1) {
-                                      CartService.instance.updateQuantity(
-                                        book.id,
-                                        _quantity,
-                                      );
-                                    }
-                                  } else {
-                                    CartService.instance.updateQuantity(
-                                      book.id,
-                                      existingQty + _quantity,
-                                    );
-                                  }
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Đã thêm vào giỏ hàng!'),
-                                    ),
-                                  );
-                                  setState(() => _quantity = 1);
-
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const CartScreen(),
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Mua ngay',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 32),
-                        // Description Section
-                        Text(
-                          'Giới thiệu sách',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          book.description ?? 'Chưa có mô tả cho sách này.',
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
-                                height: 1.6,
-                                color: Colors.white.withValues(alpha: 0.8),
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Related Books
-                  const SizedBox(height: 32),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      'Sách cùng thể loại',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 250,
-                    child: _loadingRelated
-                        ? const Center(child: CircularProgressIndicator())
-                        : _relatedBooks.isEmpty
-                        ? const Center(child: Text('Chưa có sách liên quan'))
-                        : ListView.separated(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            scrollDirection: Axis.horizontal,
-                            itemBuilder: (context, index) {
-                              final item = _relatedBooks[index];
-                              return SizedBox(
-                                width: 140,
-                                child: InkWell(
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => BookDetailScreen(
-                                          bookId: item.id,
-                                          initialBook: item,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          child: SizedBox(
-                                            width: 140,
-                                            child: _NetworkImage(
-                                              url: item.thumbnailUrl,
+                      const SizedBox(height: 12),
+                      if (_reviewProvider.loading)
+                        const Center(child: CircularProgressIndicator())
+                      else if (_reviewProvider.reviews.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Center(child: Text('Chưa có đánh giá nào cho cuốn sách này')),
+                        )
+                      else
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _reviewProvider.reviews.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final review = _reviewProvider.reviews[index];
+                            return ReviewItemWidget(
+                              review: review,
+                              isMyReview: review.userId == _myUserId,
+                              onEdit: () => _editReview(review),
+                              onDelete: () => _deleteReview(review.id),
+                            );
+                          },
+                        ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Sách liên quan',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 230,
+                        child: _loadingRelated
+                            ? const Center(child: CircularProgressIndicator())
+                            : _relatedBooks.isEmpty
+                                ? const Center(child: Text('Chưa có sách liên quan'))
+                                : ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    itemBuilder: (context, index) {
+                                      final item = _relatedBooks[index];
+                                      return SizedBox(
+                                        width: 150,
+                                        child: InkWell(
+                                          onTap: () {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (_) => BookDetailScreen(bookId: item.id, initialBook: item),
+                                              ),
+                                            );
+                                          },
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Ink(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(0.04),
+                                              borderRadius: BorderRadius.circular(12),
+                                              border: Border.all(color: Colors.white.withOpacity(0.08)),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(child: _NetworkImage(url: item.thumbnailUrl)),
+                                                const SizedBox(height: 6),
+                                                Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  _currency.format(item.basePrice),
+                                                  maxLines: 1,
+                                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFB7F04A)),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        item.title,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _currency.format(item.basePrice),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Color(0xFFB7F04A),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
+                                      );
+                                    },
+                                    separatorBuilder: (context, index) => const SizedBox(width: 10),
+                                    itemCount: _relatedBooks.length,
                                   ),
-                                ),
-                              );
-                            },
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(width: 16),
-                            itemCount: _relatedBooks.length,
-                          ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
     );
   }
 }
