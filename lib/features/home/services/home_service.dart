@@ -219,6 +219,47 @@ class HomeService {
     }
   }
 
+  Future<List<HomeBlogComment>> getBlogComments(
+    String postId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final res = await _dio.get('/blog/comments/post/$postId', queryParameters: {
+        'page': page,
+        'limit': limit,
+      });
+
+      final raw = _extractDataOrRawMap(res.data, fallbackMessage: 'Get blog comments failed');
+      final commentsRaw = raw['comments'];
+      if (commentsRaw is! List) return const [];
+
+      return commentsRaw
+          .whereType<Map>()
+          .map((e) => HomeBlogComment.fromJson(Map<String, dynamic>.from(e)))
+          .toList(growable: false);
+    } on DioException catch (e) {
+      throw ApiError(prettyDioError(e), statusCode: e.response?.statusCode);
+    }
+  }
+
+  Future<void> createBlogComment(
+    String postId, {
+    required String authorName,
+    required String authorEmail,
+    required String content,
+  }) async {
+    try {
+      await _dio.post('/blog/comments/post/$postId', data: {
+        'authorName': authorName,
+        'authorEmail': authorEmail,
+        'content': content,
+      });
+    } on DioException catch (e) {
+      throw ApiError(prettyDioError(e), statusCode: e.response?.statusCode);
+    }
+  }
+
   Future<List<HomeCategory>> getBookCategories({int limit = 20}) async {
     try {
       final res = await _dio.get('/categories', queryParameters: {
@@ -272,6 +313,24 @@ Map<String, dynamic> _extractDataMap(dynamic payload, {required String fallbackM
   final data = _extractData(payload, fallbackMessage: fallbackMessage);
   if (data is Map<String, dynamic>) return data;
   if (data is Map) return Map<String, dynamic>.from(data);
+  throw ApiError(fallbackMessage);
+}
+
+Map<String, dynamic> _extractDataOrRawMap(dynamic payload, {required String fallbackMessage}) {
+  if (payload is Map<String, dynamic>) {
+    if (payload['success'] == true) {
+      final data = payload['data'];
+      if (data is Map<String, dynamic>) return data;
+      if (data is Map) return Map<String, dynamic>.from(data);
+      throw ApiError(fallbackMessage);
+    }
+    return payload;
+  }
+
+  if (payload is Map) {
+    return Map<String, dynamic>.from(payload);
+  }
+
   throw ApiError(fallbackMessage);
 }
 

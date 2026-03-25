@@ -27,9 +27,8 @@ class _HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (provider.loading) {
+    if (provider.loading)
       return const Center(child: CircularProgressIndicator());
-    }
 
     return RefreshIndicator(
       onRefresh: provider.loadHome,
@@ -80,108 +79,27 @@ class _HomeTab extends StatelessWidget {
             isBlogFavorited: isBlogFavorited,
           ),
           const SizedBox(height: 16),
-          Text('Danh mục / Tag phổ biến', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Danh mục / Tag phổ biến',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              ...provider.bookCategories.take(8).map((e) => Chip(label: Text('Book: ${e.name}'))),
-              ...provider.blogCategories.take(8).map((e) => Chip(label: Text('Blog: ${e.name}'))),
-              ...provider.popularTags.take(10).map((e) => Chip(label: Text('#$e'))),
+              ...provider.bookCategories
+                  .take(8)
+                  .map((e) => Chip(label: Text('Book: ${e.name}'))),
+              ...provider.blogCategories
+                  .take(8)
+                  .map((e) => Chip(label: Text('Blog: ${e.name}'))),
+              ...provider.popularTags
+                  .take(10)
+                  .map((e) => Chip(label: Text('#$e'))),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BooksTab extends StatefulWidget {
-  const _BooksTab({
-    required this.provider,
-    required this.currency,
-    required this.onOpenDetail,
-    required this.onToggleFavoriteBook,
-    required this.isBookFavorited,
-  });
-
-  final HomeProvider provider;
-  final NumberFormat currency;
-  final ValueChanged<HomeBook> onOpenDetail;
-  final ValueChanged<HomeBook> onToggleFavoriteBook;
-  final bool Function(String id) isBookFavorited;
-
-  @override
-  State<_BooksTab> createState() => _BooksTabState();
-}
-
-class _BooksTabState extends State<_BooksTab> {
-  final TextEditingController _searchController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _openBookSearchPage() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => BookSearchFilterScreen(
-          categories: widget.provider.bookCategories,
-          currency: widget.currency,
-          onOpenDetail: widget.onOpenDetail,
-          onToggleFavoriteBook: widget.onToggleFavoriteBook,
-          isBookFavorited: widget.isBookFavorited,
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
-      child: Column(
-        children: [
-          TextField(
-            readOnly: true,
-            controller: _searchController,
-            onTap: _openBookSearchPage,
-            decoration: InputDecoration(
-              hintText: 'Tìm kiếm theo tiêu đề/tác giả',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: const Icon(Icons.open_in_new),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: _openBookSearchPage,
-              icon: const Icon(Icons.menu_book_outlined),
-              label: const Text('Mở trang Sách (Search / Sort / Filter)'),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: const Text(
-              'Toan bo tinh nang tim kiem, sap xep va bo loc Sach da duoc tach ra 1 module rieng trong 1 trang chuyen biet.',
-            ),
           ),
         ],
       ),
@@ -205,108 +123,111 @@ class _BlogsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final posts = provider.allBlogs;
-
-    if (provider.loading) {
+    if (provider.loading)
       return const Center(child: CircularProgressIndicator());
-    }
-    if (posts.isEmpty) {
-      return const Center(child: Text('Chưa có bài viết'));
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(12),
-      itemBuilder: (context, index) {
-        final post = posts[index];
-        return ListTile(
-          onTap: () => onOpenDetail(post),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
-          ),
-          leading: SizedBox(width: 44, child: _NetworkImage(url: post.featuredImage)),
-          title: Text(post.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-          subtitle: Text(post.excerpt, maxLines: 2, overflow: TextOverflow.ellipsis),
-          trailing: IconButton(
-            icon: Icon(isBlogFavorited(post.id) ? Icons.favorite : Icons.favorite_border, color: Colors.redAccent),
-            onPressed: () => onToggleFavoriteBlog(post),
-          ),
-        );
-      },
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
-      itemCount: posts.length,
-    );
-  }
-}
-
-class _FavoritesTab extends StatelessWidget {
-  const _FavoritesTab({
-    required this.provider,
-    required this.currency,
-    required this.onOpenBookDetail,
-    required this.onOpenBlogDetail,
-  });
-
-  final HomeProvider provider;
-  final NumberFormat currency;
-  final ValueChanged<HomeBook> onOpenBookDetail;
-  final ValueChanged<HomeBlogPost> onOpenBlogDetail;
-
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          const TabBar(tabs: [Tab(text: 'Sách đã lưu'), Tab(text: 'Bài viết đã like/lưu')]),
-          Expanded(
-            child: TabBarView(
-              children: [
-                provider.favoriteBooks.isEmpty
-                    ? const Center(child: Text('Chưa có sách yêu thích'))
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(12),
-                        itemBuilder: (context, index) {
-                          final book = provider.favoriteBooks[index];
-                          return ListTile(
-                            onTap: () => onOpenBookDetail(book),
-                            leading: SizedBox(width: 44, child: _NetworkImage(url: book.thumbnailUrl)),
-                            title: Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-                            subtitle: Text(currency.format(book.basePrice)),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () => provider.removeFavoriteBook(book.id),
-                            ),
-                          );
-                        },
-                        separatorBuilder: (context, index) => const Divider(height: 1),
-                        itemCount: provider.favoriteBooks.length,
-                      ),
-                provider.favoriteBlogs.isEmpty
-                    ? const Center(child: Text('Chưa có bài viết yêu thích'))
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(12),
-                        itemBuilder: (context, index) {
-                          final post = provider.favoriteBlogs[index];
-                          return ListTile(
-                            onTap: () => onOpenBlogDetail(post),
-                            leading: SizedBox(width: 44, child: _NetworkImage(url: post.featuredImage)),
-                            title: Text(post.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-                            subtitle: Text(post.excerpt, maxLines: 1, overflow: TextOverflow.ellipsis),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () => provider.removeFavoriteBlog(post.id),
-                            ),
-                          );
-                        },
-                        separatorBuilder: (context, index) => const Divider(height: 1),
-                        itemCount: provider.favoriteBlogs.length,
-                      ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return posts.isEmpty
+        ? const Center(child: Text('Chưa có bài viết'))
+        : ListView.separated(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+            itemBuilder: (context, index) {
+              final post = posts[index];
+              final published = post.publishedAt != null
+                  ? DateFormat('dd/MM/yyyy').format(post.publishedAt!)
+                  : '--/--/----';
+              return InkWell(
+                onTap: () => onOpenDetail(post),
+                borderRadius: BorderRadius.circular(14),
+                child: Ink(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.03),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
+                  ),
+                  child: SizedBox(
+                    height: 100,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 96,
+                          height: 96,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: _NetworkImage(url: post.featuredImage),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  post.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Expanded(
+                                child: Text(
+                                  post.excerpt,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              SizedBox(
+                                height: 24,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '$published • ${post.viewCount ?? 0} lượt xem',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      iconSize: 20,
+                                      icon: Icon(
+                                        isBlogFavorited(post.id)
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: Colors.redAccent,
+                                      ),
+                                      onPressed: () =>
+                                          onToggleFavoriteBlog(post),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+            separatorBuilder: (context, index) => const SizedBox(height: 10),
+            itemCount: posts.length,
+          );
   }
 }
 
@@ -384,6 +305,296 @@ class _ProfileTabState extends State<_ProfileTab> with AutomaticKeepAliveClientM
 
   @override
   Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 32,
+                  backgroundImage: provider.avatarUrl != null
+                      ? NetworkImage(provider.avatarUrl!)
+                      : null,
+                  child: provider.avatarUrl == null
+                      ? const Icon(Icons.person, size: 28)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        provider.userName,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        provider.userEmail,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          FilledButton(
+                            onPressed: () async {
+                              final nameCtrl = TextEditingController(
+                                text: provider.userName,
+                              );
+                              final emailCtrl = TextEditingController(
+                                text: provider.userEmail,
+                              );
+                              final avatarCtrl = TextEditingController(
+                                text: provider.avatarUrl ?? '',
+                              );
+                              final saved = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Chỉnh sửa thông tin'),
+                                  content: SingleChildScrollView(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        TextField(
+                                          controller: nameCtrl,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Tên',
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        TextField(
+                                          controller: emailCtrl,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Email',
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        TextField(
+                                          controller: avatarCtrl,
+                                          decoration: const InputDecoration(
+                                            labelText: 'URL avatar (tuỳ chọn)',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text('Huỷ'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      child: const Text('Lưu'),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (saved == true) {
+                                provider.updateProfile(
+                                  name: nameCtrl.text.trim().isEmpty
+                                      ? provider.userName
+                                      : nameCtrl.text.trim(),
+                                  email: emailCtrl.text.trim(),
+                                  avatar: avatarCtrl.text.trim().isEmpty
+                                      ? null
+                                      : avatarCtrl.text.trim(),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Cập nhật thông tin thành công',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Text('Chỉnh sửa'),
+                          ),
+                          const SizedBox(width: 8),
+                          OutlinedButton(
+                            onPressed: () {
+                              provider.fetchOrders();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      OrderScreen(provider: provider),
+                                ),
+                              );
+                            },
+                            child: const Text('Xem đơn hàng'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            _CountChip(
+              label: 'Sách đã lưu',
+              value: provider.favoriteBooks.length,
+            ),
+            _CountChip(
+              label: 'Bài viết đã like',
+              value: provider.favoriteBlogs.length,
+            ),
+            _CountChip(label: 'Bình luận', value: provider.myCommentCount),
+          ],
+        ),
+        const SizedBox(height: 18),
+
+        // const SizedBox(height: 6),
+        // const Text(
+        //   'Đơn hàng của tôi',
+        //   style: TextStyle(fontWeight: FontWeight.w700),
+        // ),
+        // const SizedBox(height: 8),
+        // if (provider.orders.isEmpty)
+        //   const Text(
+        //     'Bạn chưa có đơn hàng nào. Nhấn "Tải đơn hàng" để xem demo.',
+        //   ),
+        // if (provider.orders.isNotEmpty)
+        //   ...provider.orders.map(
+        //     (o) => Card(
+        //       margin: const EdgeInsets.symmetric(vertical: 6),
+        //       child: ListTile(
+        //         title: Text('Đơn ${o.id} • ${o.status}'),
+        //         subtitle: Text('${o.shortDate} • ${o.items.length} mặt hàng'),
+        //         trailing: Column(
+        //           mainAxisSize: MainAxisSize.min,
+        //           crossAxisAlignment: CrossAxisAlignment.end,
+        //           children: [
+        //             Text('${o.total}đ'),
+        //             const SizedBox(height: 4),
+        //             TextButton(
+        //               onPressed: () {
+        //                 showModalBottomSheet(
+        //                   context: context,
+        //                   builder: (_) => Padding(
+        //                     padding: const EdgeInsets.all(12),
+        //                     child: Column(
+        //                       mainAxisSize: MainAxisSize.min,
+        //                       crossAxisAlignment: CrossAxisAlignment.start,
+        //                       children: [
+        //                         Text(
+        //                           'Chi tiết đơn ${o.id}',
+        //                           style: Theme.of(context).textTheme.titleMedium
+        //                               ?.copyWith(fontWeight: FontWeight.w700),
+        //                         ),
+        //                         const SizedBox(height: 8),
+        //                         ...o.items.map(
+        //                           (it) => Padding(
+        //                             padding: const EdgeInsets.symmetric(
+        //                               vertical: 4,
+        //                             ),
+        //                             child: Row(
+        //                               mainAxisAlignment:
+        //                                   MainAxisAlignment.spaceBetween,
+        //                               children: [
+        //                                 Text(it.title),
+        //                                 Text('${it.quantity} x ${it.price}đ'),
+        //                               ],
+        //                             ),
+        //                           ),
+        //                         ),
+        //                         const SizedBox(height: 8),
+        //                         Text(
+        //                           'Tổng: ${o.total}đ',
+        //                           style: const TextStyle(
+        //                             fontWeight: FontWeight.w700,
+        //                           ),
+        //                         ),
+        //                       ],
+        //                     ),
+        //                   ),
+        //                 );
+        //               },
+        //               child: const Text('Chi tiết'),
+        //               style: TextButton.styleFrom(
+        //                 padding: EdgeInsets.zero,
+        //                 minimumSize: const Size(40, 24),
+        //                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        //               ),
+        //             ),
+        //           ],
+        //         ),
+        //         onTap: () {
+        //           showModalBottomSheet(
+        //             context: context,
+        //             builder: (_) => Padding(
+        //               padding: const EdgeInsets.all(12),
+        //               child: Column(
+        //                 mainAxisSize: MainAxisSize.min,
+        //                 crossAxisAlignment: CrossAxisAlignment.start,
+        //                 children: [
+        //                   Text(
+        //                     'Chi tiết đơn ${o.id}',
+        //                     style: Theme.of(context).textTheme.titleMedium
+        //                         ?.copyWith(fontWeight: FontWeight.w700),
+        //                   ),
+        //                   const SizedBox(height: 8),
+        //                   ...o.items.map(
+        //                     (it) => Padding(
+        //                       padding: const EdgeInsets.symmetric(vertical: 4),
+        //                       child: Row(
+        //                         mainAxisAlignment:
+        //                             MainAxisAlignment.spaceBetween,
+        //                         children: [
+        //                           Text(it.title),
+        //                           Text('${it.quantity} x ${it.price}đ'),
+        //                         ],
+        //                       ),
+        //                     ),
+        //                   ),
+        //                   const SizedBox(height: 8),
+        //                   Text(
+        //                     'Tổng: ${o.total}đ',
+        //                     style: const TextStyle(fontWeight: FontWeight.w700),
+        //                   ),
+        //                 ],
+        //               ),
+        //             ),
+        //           );
+        //         },
+        //       ),
+        //     ),
+        // ),
+        const SizedBox(height: 12),
+        const _ProfileMenuTile(
+          title: 'Sách yêu thích',
+          icon: Icons.menu_book_outlined,
+        ),
+        const _ProfileMenuTile(
+          title: 'Bài viết đã lưu',
+          icon: Icons.bookmark_outline,
+        ),
+        const _ProfileMenuTile(
+          title: 'Bình luận của tôi',
+          icon: Icons.chat_bubble_outline,
+        ),
+        const _ProfileMenuTile(title: 'Cài đặt', icon: Icons.settings_outlined),
+        const _ProfileMenuTile(title: 'Đăng xuất', icon: Icons.logout),
+      ],
     super.build(context);
 
     final provider = widget.provider;
@@ -515,7 +726,12 @@ class _CountChip extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('$value', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            '$value',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
           Text(label),
         ],
       ),
