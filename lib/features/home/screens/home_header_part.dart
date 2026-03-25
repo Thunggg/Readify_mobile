@@ -12,6 +12,7 @@ class _TopHeader extends StatelessWidget {
     required this.onSearchChanged,
     required this.onSelectSuggestion,
     required this.onProfileMenuTap,
+    required this.onNotificationTap,
   });
 
   final String userName;
@@ -24,6 +25,7 @@ class _TopHeader extends StatelessWidget {
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<HomeSearchSuggestion> onSelectSuggestion;
   final ValueChanged<String> onProfileMenuTap;
+  final VoidCallback onNotificationTap;
 
   @override
   Widget build(BuildContext context) {
@@ -66,17 +68,27 @@ class _TopHeader extends StatelessWidget {
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    IconButton(onPressed: () {}, icon: const Icon(Icons.notifications_none_rounded)),
+                    IconButton(
+                      onPressed: onNotificationTap,
+                      icon: const Icon(Icons.notifications_none_rounded),
+                    ),
                     if (unreadNotifications > 0)
                       Positioned(
                         right: 8,
                         top: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                          decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(999)),
-                          child: Text(
-                            unreadNotifications > 99 ? '99+' : '$unreadNotifications',
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+                        child: GestureDetector(
+                          onTap: onNotificationTap,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: const Color(0xFF0D0F14), width: 1.5),
+                            ),
+                            child: Text(
+                              unreadNotifications > 99 ? '99+' : '$unreadNotifications',
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
                           ),
                         ),
                       ),
@@ -84,18 +96,23 @@ class _TopHeader extends StatelessWidget {
                 ),
                 PopupMenuButton<String>(
                   onSelected: onProfileMenuTap,
+                  offset: const Offset(0, 48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   itemBuilder: (context) => const [
                     PopupMenuItem(value: 'profile', child: Text('Trang cá nhân')),
                     PopupMenuItem(value: 'logout', child: Text('Đăng xuất')),
                   ],
-                  child: Row(
-                    children: [
-                      const CircleAvatar(radius: 14, child: Icon(Icons.person, size: 18)),
-                      if (!compact) ...[
-                        const SizedBox(width: 6),
-                        Text(userName, style: Theme.of(context).textTheme.bodySmall),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Row(
+                      children: [
+                        const CircleAvatar(radius: 14, child: Icon(Icons.person, size: 18)),
+                        if (!compact) ...[
+                          const SizedBox(width: 6),
+                          Text(userName, style: Theme.of(context).textTheme.bodySmall),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ],
