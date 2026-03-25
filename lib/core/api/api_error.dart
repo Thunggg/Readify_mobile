@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 
 class ApiError implements Exception {
   ApiError(this.message, {this.statusCode});
@@ -24,6 +25,21 @@ String prettyDioError(Object err) {
     return err.message ?? 'Network error';
   }
 
-  return 'Unexpected error';
+  if (err is PlatformException) {
+    final msg = err.message?.trim();
+    if (msg != null && msg.isNotEmpty) return msg;
+    return err.code.isNotEmpty ? err.code : 'Platform error';
+  }
+
+  if (err is MissingPluginException) {
+    // Common after adding a new plugin and only doing hot reload.
+    return 'Missing plugin. Please stop the app and run again (full restart).';
+  }
+
+  if (err is FormatException) {
+    return err.message.isNotEmpty ? err.message : 'Invalid format';
+  }
+
+  return err.toString();
 }
 
